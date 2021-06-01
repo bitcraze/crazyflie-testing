@@ -1,0 +1,6 @@
+version = 1
+
+[device.default]
+type = "cf2.1"
+radio = "radio://0/60/2M/E7E7E7E7E7"
+decks = []

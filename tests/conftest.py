@@ -1,7 +1,5 @@
-import json
 import os
 import time
-from typing import Callable, Any
 import toml
 import glob
 
@@ -15,11 +13,11 @@ REQUIREMENT = os.path.join(DIR, '../requirements/')
 
 
 class BCDevice:
-    def __init__(self, device):
+    def __init__(self, name, device):
         cflib.crtp.init_drivers()
 
         self.type = device['type']
-        self.name = device['name']
+        self.name = name
         self.link_uri = device['radio']
         self.cf = Crazyflie(rw_cache='./cache')
         self.bl = Bootloader(self.link_uri)
@@ -57,14 +55,13 @@ def get_devices():
 
     path = ""
     try:
-        path = os.path.join(SITE_PATH, '%s.json' % site)
-        f_json = open(path, 'r')
-        site_j = json.loads(f_json.read())
+        path = os.path.join(SITE_PATH, '%s.toml' % site)
+        site_t = toml.load(open(path, 'r'))
 
-        for device in site_j['devices']:
-            devices.append(BCDevice(device))
+        for name, device in site_t['device'].items():
+            devices.append(BCDevice(name, device))
     except Exception:
-        raise Exception('Failed to parse json %s!' % path)
+        raise Exception('Failed to parse toml %s!' % path)
 
     return devices
 
