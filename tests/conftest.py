@@ -1,6 +1,9 @@
 import json
 import os
 import time
+from typing import Callable, Any
+import toml
+import glob
 
 import cflib
 from cflib.bootloader import Bootloader
@@ -8,6 +11,7 @@ from cflib.crazyflie import Crazyflie
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 SITE_PATH = os.path.join(DIR, '../sites/')
+REQUIREMENT = os.path.join(DIR, '../requirements/')
 
 
 class BCDevice:
@@ -51,6 +55,7 @@ def get_devices():
     if site is None:
         raise Exception('No CRAZY_SITE env specified!')
 
+    path = ""
     try:
         path = os.path.join(SITE_PATH, '%s.json' % site)
         f_json = open(path, 'r')
@@ -62,3 +67,16 @@ def get_devices():
         raise Exception('Failed to parse json %s!' % path)
 
     return devices
+
+def load_all_requirements():
+    requirements = glob.glob(REQUIREMENT + '*.toml')
+    req_dict = {}
+    for requirement in requirements:
+        req = toml.load(open(requirement))
+        req_dict.update(req)
+
+    return req_dict
+
+def get_requirement(group: str, name: str):
+    req = load_all_requirements()
+    return req['requirement'][group][name]

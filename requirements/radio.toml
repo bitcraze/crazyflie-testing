@@ -1,0 +1,40 @@
+[group.radio]
+description = """Radio communication requirements.
+
+These requirements targets the low level radio communication.
+"""
+
+[requirement.radio.latencysmall]
+description = "Link round-trip latency for small radio packets (4 bytes)"
+rational = "Empirical"
+packet_size = 4
+limit_high_ms = 8
+
+[requirement.radio.latencybig]
+description = "Link round-trip latency for small radio packets (28 bytes)"
+rational = "Empirical"
+packet_size = 28
+limit_high_ms = 8
+
+[requirement.radio.bwsmall]
+description = "Packet rate for small radio packets (4 bytes)"
+rational = "Empirical"
+packet_size = 4
+limit_low = 800
+
+[requirement.radio.bwbig]
+description = "Packet rate for big radio packet (28 bytes)"
+rational = "Empirical"
+packet_size = 28
+limit_low = 500
+
+[requirement.radio.reliability]
+description = "Packet exchange without any information loss"
+rational = "Design"
+background = """
+The design is that there should never be any packet loss ever. So we should be
+able to exchange an infinit amount of packet.
+However, testing infinity is hard so, as a compromise, we are esting on
+30 000 packets which takes ~= 30s to test.
+"""
+limit_low = 30_000   # It is hard to test infinity ....

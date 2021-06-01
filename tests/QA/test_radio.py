@@ -10,32 +10,29 @@ from cflib.crtp.crtpstack import CRTPPort
 
 import conftest
 
-RADIO_LATENCY_THRESSHOLD = 8  # ms
-RADIO_BANDWIDTH_THRESSHOLD_BIG = 800  # packets/s
-RADIO_BANDWIDTH_THRESSHOLD_SMALL = 400  # packets/s
-
-
 @pytest.mark.parametrize('dev', conftest.get_devices(), ids=lambda d: d.name)
 class TestRadio:
-    def test_latency(self, dev):
-        '''
-        Test of requirements: RL001, RL003
-        '''
-        # Packet size 4
-        assert(latency(dev.link_uri, 4) < RADIO_LATENCY_THRESSHOLD)
+    def test_latency_small_packets(self, dev):
+        requirement = conftest.get_requirement('radio', 'latencysmall')
+        assert(latency(dev.link_uri, requirement['packet_size']) < requirement['limit_high_ms'])
 
-        # Packet size 28
-        assert(latency(dev.link_uri, 28) < RADIO_LATENCY_THRESSHOLD)
 
-    def test_bandwidth(self, dev):
-        '''
-        Test of requirements: RL003, RL004
-        '''
-        # Packet size 4
-        assert(bandwidth(dev.link_uri, 4) > RADIO_BANDWIDTH_THRESSHOLD_BIG)
+    def test_latency_big_packets(self, dev):
+        requirement = conftest.get_requirement('radio', 'latencybig')
+        assert(latency(dev.link_uri, requirement['packet_size']) < requirement['limit_high_ms'])
 
-        # Packet size 28
-        assert(bandwidth(dev.link_uri, 28) > RADIO_BANDWIDTH_THRESSHOLD_SMALL)
+    def test_bandwidth_small_packets(self, dev):
+        requirement = conftest.get_requirement('radio', 'bwsmall')
+        assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
+
+    def test_bandwidth_big_packets(self, dev):
+        requirement = conftest.get_requirement('radio', 'bwbig')
+        assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
+    
+    def test_reliability(self, dev):
+        requirement = conftest.get_requirement('radio', 'reliability')
+        # The bandwidth function will fail if there is any packet loss
+        bandwidth(dev.link_uri, 4, requirement['limit_low'])
 
 
 def build_data(i, packet_size):
