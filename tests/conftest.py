@@ -5,6 +5,8 @@ import time
 import cflib
 from cflib.bootloader import Bootloader
 from cflib.crazyflie import Crazyflie
+from cflib.crtp.crtpstack import CRTPPacket
+from cflib.crtp.crtpstack import CRTPPort
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 SITE_PATH = os.path.join(DIR, '../sites/')
@@ -23,25 +25,34 @@ class BCDevice:
     def __str__(self):
         return 'test'
 
-    def connect_sync(self, querystring=None):
-        if querystring is None:
-            uri = self.link_uri
-        else:
-            uri = self.link_uri + querystring
+    def firmware_up(self) -> bool:
+        ''' Return true if we can contact the (stm32 based) firmware '''
+        timeout = 2  # seconds
+        link = cflib.crtp.get_link_driver(self.link_uri)
 
-        self.cf.open_link(uri)
+        pk = CRTPPacket()
+        pk.set_header(CRTPPort.LINKCTRL, 0)  # Echo channel
+        pk.data = b'test'
+        link.send_packet(pk)
 
         ts = time.time()
-        while not self.cf.is_connected():
-            time.sleep(1.0 / 1000.0)
-            delta = time.time() - ts
-            if delta > self.CONNECT_TIMEOUT:
-                return False
-        return True
+        while True:
+            if time.time() - ts > timeout:
+                break
 
+            pk_ack = link.receive_packet(0.1)
+            if pk_ack is None:
+                continue
 
-def get_ids(device):
-    return device.name
+            if pk_ack.port != CRTPPort.LINKCTRL or pk_ack.channel != 0:
+                continue
+
+            if pk.data == pk_ack.data:
+                link.close()
+                return True
+
+        link.close()
+        return False
 
 
 def get_devices():
