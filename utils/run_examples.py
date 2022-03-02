@@ -20,7 +20,7 @@ def run(path: str):
     for dev in get_devices():
         try:
             print(f'\n🏃🏃🏃 Running {os.path.basename(path)} on {dev.name} 🏃🏃🏃')
-            exit_code = subprocess.run(['python3', path], env={'CFLIB_URI': dev.link_uri}, timeout=120).returncode
+            exit_code = subprocess.run(['python3', path], shell=True, env={'CFLIB_URI': dev.link_uri}, timeout=120).returncode
             print(f'🏁🏁🏁 Exited with code: {exit_code} 🏁🏁🏁\n')
             if exit_code != 0:
                 success = False
