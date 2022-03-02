@@ -2,6 +2,7 @@ from pathlib import Path
 
 import argparse
 import os
+import subprocess
 import sys
 
 #
@@ -17,12 +18,14 @@ from conftest import get_devices  # noqa
 def run(path: str):
     success = True
     for dev in get_devices():
-        print(f'\n🏃🏃🏃 Running {os.path.basename(path)} on {dev.name} 🏃🏃🏃')
-        os.environ['CFLIB_URI'] = dev.link_uri
-
-        exit_code = os.WEXITSTATUS(os.system(f'python3 {path}'))
-        print(f'🏁🏁🏁 Exited with code: {exit_code} 🏁🏁🏁\n')
-        if exit_code != 0:
+        try:
+            print(f'\n🏃🏃🏃 Running {os.path.basename(path)} on {dev.name} 🏃🏃🏃')
+            exit_code = subprocess.run(['python3', path], env={'CFLIB_URI': dev.link_uri}, timeout=120).returncode
+            print(f'🏁🏁🏁 Exited with code: {exit_code} 🏁🏁🏁\n')
+            if exit_code != 0:
+                success = False
+        except subprocess.TimeoutExpired:
+            print(f'🏁🏁🏁 Timed out! 🏁🏁🏁\n')
             success = False
 
     return success
