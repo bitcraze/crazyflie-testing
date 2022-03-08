@@ -26,5 +26,5 @@ bootloader_radio = "radio://0/0/2M/B1CEE678C5?safelink=0"
 # decks = ["bcLighthouse4"]
 
 [device.cf2_stock]
-radio = "radio://0/50/2M/E7E7E71702"
+radio = "radio://0/50/2M/E7E7E71701"
 bootloader_radio = "radio://0/0/2M/B177790F3A?safelink=0"
