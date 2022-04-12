@@ -33,7 +33,7 @@ class TestDecks:
 
     def test_deck_present(self, test_setup):
         '''
-        Check that all decks defined in for the device in the site
+        Check that all decks defined for the device in the site
         is detected, using the parameter interface.
         '''
         if not test_setup.device.decks:
