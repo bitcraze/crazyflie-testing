@@ -14,15 +14,15 @@ version = 1
 # decks = ["bcUSD"]
 # bootloader_radio = "radio://0/0/2M/B1B926AC34?safelink=0"
 
-[device.cf2_flow2_multiranger]
-radio = "radio://0/50/2M/E7E7E71704"
-decks = ["bcFlow2", "bcMultiranger"]
-bootloader_radio = "radio://0/0/2M/B1CEE678C5?safelink=0"
+# [device.cf2_flow2_multiranger]
+# radio = "radio://0/50/2M/E7E7E71704"
+# decks = ["bcFlow2", "bcMultiranger"]
+# bootloader_radio = "radio://0/0/2M/B1CEE678C5?safelink=0"
 
-# [device.cf2_flow2]
-# radio = "radio://0/50/2M/E7E7E71705"
-# decks = ["bcFlow2"]
-# bootloader_radio = "radio://0/0/2M/B16298A8A3?safelink=0"
+[device.cf2_flow2]
+radio = "radio://0/50/2M/E7E7E71705"
+decks = ["bcFlow2"]
+bootloader_radio = "radio://0/0/2M/B16298A8A3?safelink=0"
 
 # [device.cf2_flow2_lighthouse]
 # radio = "radio://0/50/2M/E7E7E71706"
