@@ -1,13 +1,13 @@
 version = 1
 
-[device.cf2_stock]
-radio = "radio://0/50/2M/E7E7E71701"
-bootloader_radio = "radio://0/0/2M/B1F519F77B?safelink=0"
+# [device.cf2_stock]
+# radio = "radio://0/50/2M/E7E7E71701"
+# bootloader_radio = "radio://0/0/2M/B1F519F77B?safelink=0"
 
-# [device.cf2_lighthouse]
-# radio = "radio://0/50/2M/E7E7E71702"
-# bootloader_radio = "radio://0/0/2M/B177790F3A?safelink=0"
-# decks = ["bcLighthouse4"]
+[device.cf2_lighthouse]
+radio = "radio://0/50/2M/E7E7E71702"
+bootloader_radio = "radio://0/0/2M/B177790F3A?safelink=0"
+decks = ["bcLighthouse4"]
 
 # [device.cf2_usddeck]
 # radio = "radio://0/50/2M/E7E7E71703"
