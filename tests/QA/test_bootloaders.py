@@ -13,6 +13,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 import pytest
 import conftest
+import time
 
 
 @pytest.mark.parametrize('dev', conftest.get_devices(), ids=lambda d: d.name)
@@ -20,14 +21,14 @@ class TestBootloaders:
 
     @staticmethod
     def bootloader_back_and_forth(dev: conftest.BCDevice):
-        assert dev.firmware_up()
-
-        #
-        # The start_bootloader method only returns true if it can
-        # communicate with the bootloader.
-        #
+        # The start_bootloader method only returns true if it can communicate with the bootloader.
         assert dev.bl.start_bootloader(warm_boot=True)
         dev.bl.reset_to_firmware()
+
+        # Give the CF some time to boot
+        time.sleep(0.5)
+        assert dev.firmware_up()
+
         dev.bl.close()
 
     def test_bootloader_reset_simple(self, dev):
