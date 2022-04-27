@@ -31,5 +31,5 @@ version = 1
 
 [device.cf2_ai]
 radio = "radio://0/50/2M/E7E7E71707"
-decks = ["bcAIDeck"]
+decks = ["bcAI"]
 bootloader_radio = "radio://0/0/2M/B153611B70?safelink=0"
