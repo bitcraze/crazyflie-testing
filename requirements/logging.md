@@ -23,8 +23,7 @@ These requirements targets the Crazyflie logging framework.
 
 
 It must be possible to receive logging variable values in both a synchronous and
-asynchronous manner. It must also be 
-possible to set a desired rate of how
+asynchronous manner. It must also be possible to set a desired rate of how
 often one receives updates of the logging variable.
 
 |Field|Value|
