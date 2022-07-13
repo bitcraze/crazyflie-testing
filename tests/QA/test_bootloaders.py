@@ -34,7 +34,7 @@ class TestBootloaders:
     def test_bootloader_reset_simple(self, dev):
         self.bootloader_back_and_forth(dev)
 
-    def test_bootloader_reset_stress(self, dev):
-        requirement = conftest.get_requirement('bootloaders.reliability')
-        for _ in range(0, requirement['iterations']):
-            self.bootloader_back_and_forth(dev)
+    #def test_bootloader_reset_stress(self, dev):
+    #    requirement = conftest.get_requirement('bootloaders.reliability')
+    #    for _ in range(0, requirement['iterations']):
+    #        self.bootloader_back_and_forth(dev)
