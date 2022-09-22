@@ -1,3 +1,4 @@
+import string
 import pytest
 import binascii
 import os
@@ -7,6 +8,7 @@ import glob
 import struct
 import sys
 
+from threading import Event
 from typing import Callable
 from typing import List
 from typing import NoReturn
@@ -44,6 +46,10 @@ class BCDevice:
             self.decks = device['decks']
 
         self.cf = Crazyflie(rw_cache='./cache')
+
+        self.console_log = ''
+        self.cf.console.receivedChar.add_callback(self._console_cb)
+
         self.bl = Bootloader(self.link_uri)
 
     def __str__(self):
@@ -117,16 +123,41 @@ class BCDevice:
         else:
             uri = self.link_uri + querystring
 
-        self.cf.open_link(uri)
+        is_success = self._wait_for_full_connection(self.cf, uri, self.CONNECT_TIMEOUT)
+        if is_success:
+            is_success = self._verify_cf_self_test_pass(self.cf)
 
-        ts = time.time()
-        while not self.cf.is_connected():
-            time.sleep(1.0 / 1000.0)
-            delta = time.time() - ts
-            if delta > self.CONNECT_TIMEOUT:
-                return False
-        return True
+            if not is_success:
+                # Wait a bit for all console logs to arrive
+                time.sleep(0.5)
+                print(f'The Crazyflie did not pass self tests ({uri})')
+                print('--- Begin dump console log')
+                print(self.console_log)
+                print('--- End dump console log')
+        else:
+            print(f'Failed to connect to Crazyflie at {uri}')
 
+        return is_success
+
+    def _wait_for_full_connection(self, cf: Crazyflie, uri: string, timeout: float) -> bool:
+        connection_event = Event()
+        def connection_cb(uri):
+            connection_event.set()
+
+        cf.fully_connected.add_callback(connection_cb)
+        cf.open_link(uri)
+        is_connection_success = connection_event.wait(timeout=timeout)
+        cf.fully_connected.remove_callback(connection_cb)
+
+        return is_connection_success
+
+    def _verify_cf_self_test_pass(self, cf: Crazyflie) -> bool:
+        selftest_passed = cf.param.get_value('system.selftestPassed')
+        result = bool(int(selftest_passed))
+        return result
+
+    def _console_cb(self, msg):
+        self.console_log += msg
 
 class DeviceFixture:
     def __init__(self, dev: BCDevice):
