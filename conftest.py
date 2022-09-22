@@ -142,6 +142,7 @@ class BCDevice:
     def _wait_for_full_connection(self, cf: Crazyflie, uri: string, timeout: float) -> bool:
         connection_event = Event()
         def connection_cb(uri):
+            nonlocal connection_event
             connection_event.set()
 
         cf.fully_connected.add_callback(connection_cb)

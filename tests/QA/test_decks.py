@@ -39,23 +39,8 @@ class TestDecks:
         if not test_setup.device.decks:
             pytest.skip('no decks on device')
 
-        discovered = list()
-
-        def deck_param_callback(name, value):
-            nonlocal discovered
-
-            if int(value) == 1:
-                discovered.append(name.rsplit('.')[-1])  # deck.name => name
-
         assert test_setup.device.connect_sync()
 
-        test_setup.device.cf.param.add_update_callback(
-            group='deck',
-            name=None,
-            cb=deck_param_callback
-        )
-
-        time.sleep(5)
-
         for deck in test_setup.device.decks:
-            assert deck in discovered
+            is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
+            assert is_deck_present
