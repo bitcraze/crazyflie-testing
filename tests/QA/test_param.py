@@ -204,7 +204,7 @@ class TestParameters:
         wait_for_callback_event = Event()
 
         max_avg_sec_per_parameter = 0.5  # in sec
-        max_sec_defrac = 2.0  # in sec
+        max_sec_defrac = 3.0  # in sec
 
         def get_state_callback(complete_name, state):
             assert state is not None
