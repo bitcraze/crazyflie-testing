@@ -1,0 +1,49 @@
+name: Crazy Stab Lab experiment 🗡️
+
+# Controls when the action will run.
+on:
+  workflow_dispatch:
+  schedule:
+  - cron:  '0 6 * * *'
+
+jobs:
+  testsuite_at_crazylab:
+    runs-on: self-hosted
+    container:
+      image: python:3.9.7-buster
+      options: --privileged
+    env:
+      CRAZY_SITE: crazylab-malmö
+    steps:
+      - name: Install libusb
+        run: |
+          apt update
+          apt install -y libusb-1.0-0
+
+      - name: Upgrade pip
+        run:  |
+          pip3 install --upgrade pip
+
+      - name: Install pytest
+        run: pip3 install pytest
+
+      - name: Install Crazyflie python library
+        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+
+      - name: Check out sources
+        uses: actions/checkout@v2
+
+      - name: Install requirements
+        run: pip3 install -r requirements.txt
+
+      - name: Download latest firmware files
+        with:
+          repo: bitcraze/crazyflie-release
+          workflow: nightly-experiment.yml
+        uses: dawidd6/action-download-artifact@v2.14.0
+
+      - name: Upgrde devices to latest firmware
+        run: python3 management/program.py --file nightly-experiment/firmware-cf2-nightly-experiment.zip
+
+      - name: Run test suite
+        run: pytest --verbose --junit-xml $CRAZY_SITE-$(date +%s).xml tests/QA
