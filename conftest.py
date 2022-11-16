@@ -1,3 +1,5 @@
+from collections import namedtuple
+from enum import Enum
 import string
 import pytest
 import binascii
@@ -7,12 +9,9 @@ import toml
 import glob
 import struct
 import sys
-
+import subprocess
 from threading import Event
-from typing import Callable
-from typing import List
-from typing import NoReturn
-from typing import Optional
+from typing import Callable, List, NoReturn, Optional
 
 import cflib
 from cflib.bootloader import Bootloader, Cloader, Target
@@ -26,6 +25,16 @@ SITE_PATH = os.path.join(DIR, 'sites/')
 REQUIREMENT = os.path.join(DIR, 'requirements/')
 
 
+USB_Power_Control = namedtuple('Port', ['hub', 'port'])
+
+
+class USB_Power_Control_Action(str, Enum):
+    ON     = 'on'
+    OFF    = 'off'
+    TOGGLE = 'toggle'
+    RESET  = 'reset'
+
+
 class BCDevice:
     CONNECT_TIMEOUT = 10  # seconds
 
@@ -34,7 +43,9 @@ class BCDevice:
 
         self.name = name
         self.link_uri = device['radio']
-        self.usb_uri = device.get('usb')
+
+        self.usb_power_control = self._parse_usb_power_control(device)
+
         try:
             self.bl_link_uri = device['bootloader_radio']
         except KeyError:
@@ -54,7 +65,11 @@ class BCDevice:
         self.bl = Bootloader(self.link_uri)
 
     def __str__(self):
-        return '{} @ {}'.format(self.name, self.link_uri)
+        string = '{} @ {}'.format(self.name, self.link_uri)
+        if self.usb_power_control is not None:
+            hub, port = self.usb_power_control.hub, self.usb_power_control.port
+            string += f' USB pwr-ctrl: [{hub}, {port}]'
+        return string
 
     def firmware_up(self) -> bool:
         ''' Return true if we can contact the (stm32 based) firmware '''
@@ -139,6 +154,39 @@ class BCDevice:
             print(f'Failed to connect to Crazyflie at {uri}')
 
         return is_success
+
+    def set_usb_power(self, action: USB_Power_Control_Action) -> bool:
+        if self.usb_power_control is None:
+            return False
+
+        hub, port = self.usb_power_control.hub, self.usb_power_control.port
+        cmd = f'uhubctl -l {hub} -p {port} -a {action}'
+
+        print(f'> {cmd}')
+        pipe = subprocess.Popen(
+            cmd.split(' '),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        out = pipe.stdout.read()
+        err = pipe.stderr.read()
+
+        if out:
+            print(out.decode('utf-8'))
+        if err:
+            print(f'Error: {err.decode("utf-8")}')
+            return False
+
+        return True
+
+    def _parse_usb_power_control(self, device: dict) -> USB_Power_Control:
+        usb_power_control = device.get('usb_power_control')
+        if usb_power_control is None:
+            return None
+
+        hub, port = usb_power_control.split(' ')
+        return USB_Power_Control(hub, port)
 
     def _wait_for_full_connection(self, cf: Crazyflie, uri: string, timeout: float) -> bool:
         connection_event = Event()
