@@ -34,6 +34,7 @@ class BCDevice:
 
         self.name = name
         self.link_uri = device['radio']
+        self.usb_uri = device.get('usb')
         try:
             self.bl_link_uri = device['bootloader_radio']
         except KeyError:

@@ -42,7 +42,10 @@ jobs:
           workflow: nightly.yml
         uses: dawidd6/action-download-artifact@v2.14.0
 
-      - name: Upgrde devices to latest firmware
+      - name: Reset power to all devices
+        run: python3 management/usb-power-reset.py -a reset
+
+      - name: Upgrade devices to latest firmware
         run: python3 management/program.py --file nightly/firmware-cf2-nightly.zip
 
       - name: Run test suite
