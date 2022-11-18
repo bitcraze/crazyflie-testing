@@ -4,6 +4,7 @@ import argparse
 from collections import namedtuple
 import importlib
 import sys
+import traceback
 from typing import List
 from pathlib import Path
 from threading import Thread
@@ -21,6 +22,13 @@ USB_Power_Control = getattr(conftest, 'USB_Power_Control')
 USB_Power_Control_Action = getattr(conftest, 'USB_Power_Control_Action')
 
 
+class ThreadResult:
+
+    def __init__(self) -> None:
+        self.success: bool = True
+        self.msg: str = None
+
+
 class USB_PowerControlThread(Thread):
 
     def __init__(self,
@@ -30,14 +38,20 @@ class USB_PowerControlThread(Thread):
         super().__init__()
         self._usb_power_controller = usb_power_controller
         self._action = action
+        self.result = ThreadResult()
 
     def run(self) -> None:
-        self._usb_power_controller.set_usb_power(self._action)
+        try:
+            self._usb_power_controller.set_usb_power(self._action)
+        except Exception:
+            self.result.success = False
+            self.result.msg = traceback.format_exc()
 
 
 def run_action(usb_power_control: List[USB_Power_Control], action: str,
                power_on_delay: float = 0) -> None:
     print(f'Running action "{action}" for the usb ports.')
+
     # We'll set each usb port in a separate thread to make it faster,
     # since each command with uhubctl blocks for some time.
     usb_threads = [USB_PowerControlThread(ctrl, action) for ctrl in usb_power_control]
@@ -49,6 +63,11 @@ def run_action(usb_power_control: List[USB_Power_Control], action: str,
 
     for thread in usb_threads:
         thread.join()
+
+    # Check if any thread failed and throw exception if it did.
+    for thread in usb_threads:
+        if not thread.result.success:
+            raise RuntimeError(thread.result.msg + '\nA thread failed!')
 
 
 def parse_args() -> argparse.Namespace:
