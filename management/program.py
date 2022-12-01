@@ -18,6 +18,10 @@ import logging
 import os
 import sys
 import traceback
+import signal
+
+# Timeout for the program operation. 5 minutes should be enough for all devices
+TIMEOUT = 600
 
 #
 # This is to make it possible to import from conftest
@@ -32,6 +36,9 @@ logger = logging.getLogger(__name__)
 
 current_frame = 0
 
+def alarm_handler(signum, frame):
+    print('Timeout!')
+    raise Exception('Timeout!')
 
 def progress_cb(msg: str, percent: int):
     global current_frame
@@ -59,6 +66,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Flash firmware to all devices in site')
     parser.add_argument('--file', type=Path, help='Path to firmware file', required=True)
     p = parser.parse_args()
+
+    # Setup the alarm handler and ask the OS to send a SIGALRM to the process after TIMEOUT seconds
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(TIMEOUT)
 
     if not program(p.file):
         sys.exit(1)
