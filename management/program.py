@@ -20,8 +20,8 @@ import sys
 import traceback
 import signal
 
-# Timeout for the program operation. 5 minutes should be enough for all devices
-TIMEOUT = 600
+# Timeout for the program operation. 10 minutes should be enough for all devices
+TIMEOUT = 1100
 
 #
 # This is to make it possible to import from conftest
