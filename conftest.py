@@ -125,9 +125,8 @@ class BCDevice:
             else:
                 targets = []
 
-            self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets)
-        except Exception as e:
-            raise e
+            self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
+                               enable_console_log=True)
         finally:
             self.bl.close()
 
