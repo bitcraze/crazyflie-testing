@@ -43,7 +43,7 @@ def alarm_handler(signum, frame):
 
     for th in threading.enumerate():
         print(th)
-        traceback.print_stack(sys._current_frames()[th.ident])
+        traceback.print_stack(sys._current_frames()[th.ident], file=sys.stdout)
         print()
 
     sys.exit(-1)
