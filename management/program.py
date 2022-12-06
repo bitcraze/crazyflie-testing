@@ -18,10 +18,12 @@ import logging
 import os
 import sys
 import traceback
+import threading
 import signal
+import sys
 
-# Timeout for the program operation. 10 minutes should be enough for all devices
-TIMEOUT = 1100
+# Timeout for the program operation.
+TIMEOUT = 10 * 60
 
 #
 # This is to make it possible to import from conftest
@@ -38,11 +40,13 @@ current_frame = 0
 
 def alarm_handler(signum, frame):
     print('Timeout!')
-    try:
-        raise Exception('Timeout!')
-    except Exception as e:
-        print(traceback.format_exc())
-        raise e
+
+    for th in threading.enumerate():
+        print(th)
+        traceback.print_stack(sys._current_frames()[th.ident])
+        print()
+
+    sys.exit(-1)
 
 def progress_cb(msg: str, percent: int):
     global current_frame
