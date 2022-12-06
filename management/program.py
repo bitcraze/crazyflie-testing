@@ -38,7 +38,11 @@ current_frame = 0
 
 def alarm_handler(signum, frame):
     print('Timeout!')
-    raise Exception('Timeout!')
+    try:
+        raise Exception('Timeout!')
+    except Exception as e:
+        print(traceback.format_exc())
+        raise e
 
 def progress_cb(msg: str, percent: int):
     global current_frame
