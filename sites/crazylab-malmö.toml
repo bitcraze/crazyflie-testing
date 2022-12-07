@@ -1,39 +1,39 @@
 version = 1
 
-[device.cf21_stock]
-radio = "radio://0/50/2M/E7E7E71701"
-bootloader_radio = "radio://0/0/2M/B1F519F77B?safelink=0"
-usb_power_control = '1-1.4.1 1'  # hub port
-
-[device.cf21_lighthouse]
-radio = "radio://0/50/2M/E7E7E71702"
-bootloader_radio = "radio://0/0/2M/B177790F3A?safelink=0"
-decks = ["bcLighthouse4"]
-usb_power_control = '1-1.4.1 2'
-
-[device.cf21_usddeck]
-radio = "radio://0/50/2M/E7E7E71703"
-decks = ["bcUSD"]
-bootloader_radio = "radio://0/0/2M/B1B926AC34?safelink=0"
-usb_power_control = '1-1.4.1 3'
-
-[device.cf21_flow2_multiranger]
-radio = "radio://0/50/2M/E7E7E71704"
-decks = ["bcFlow2", "bcMultiranger"]
-bootloader_radio = "radio://0/0/2M/B1CEE678C5?safelink=0"
-usb_power_control = '1-1.4.1 4'
-
-[device.cf21_flow2]
-radio = "radio://0/50/2M/E7E7E71705"
-decks = ["bcFlow2"]
-bootloader_radio = "radio://0/0/2M/B16298A8A3?safelink=0"
-usb_power_control = '1-1.4.2 1'
-
-[device.cf21_flow2_lighthouse]
-radio = "radio://0/50/2M/E7E7E71706"
-decks = ["bcFlow2", "bcLighthouse4"]
-bootloader_radio = "radio://0/0/2M/B19CF77F05?safelink=0"
-usb_power_control = '1-1.4.2 2'
+# [device.cf21_stock]
+# radio = "radio://0/50/2M/E7E7E71701"
+# bootloader_radio = "radio://0/0/2M/B1F519F77B?safelink=0"
+# usb_power_control = '1-1.4.1 1'  # hub port
+#
+# [device.cf21_lighthouse]
+# radio = "radio://0/50/2M/E7E7E71702"
+# bootloader_radio = "radio://0/0/2M/B177790F3A?safelink=0"
+# decks = ["bcLighthouse4"]
+# usb_power_control = '1-1.4.1 2'
+#
+# [device.cf21_usddeck]
+# radio = "radio://0/50/2M/E7E7E71703"
+# decks = ["bcUSD"]
+# bootloader_radio = "radio://0/0/2M/B1B926AC34?safelink=0"
+# usb_power_control = '1-1.4.1 3'
+#
+# [device.cf21_flow2_multiranger]
+# radio = "radio://0/50/2M/E7E7E71704"
+# decks = ["bcFlow2", "bcMultiranger"]
+# bootloader_radio = "radio://0/0/2M/B1CEE678C5?safelink=0"
+# usb_power_control = '1-1.4.1 4'
+#
+# [device.cf21_flow2]
+# radio = "radio://0/50/2M/E7E7E71705"
+# decks = ["bcFlow2"]
+# bootloader_radio = "radio://0/0/2M/B16298A8A3?safelink=0"
+# usb_power_control = '1-1.4.2 1'
+#
+# [device.cf21_flow2_lighthouse]
+# radio = "radio://0/50/2M/E7E7E71706"
+# decks = ["bcFlow2", "bcLighthouse4"]
+# bootloader_radio = "radio://0/0/2M/B19CF77F05?safelink=0"
+# usb_power_control = '1-1.4.2 2'
 
 [device.cf21_ai]
 radio = "radio://0/50/2M/E7E7E71707"
@@ -41,7 +41,7 @@ decks = ["bcAI"]
 bootloader_radio = "radio://0/0/2M/B153611B70?safelink=0"
 usb_power_control = '1-1.4.2 3'
 
-[device.cf20_stock]
-radio = "radio://0/50/2M/E7E7E71708"
-bootloader_radio = "radio://0/0/2M/B137AC4698?safelink=0"
-usb_power_control = '1-1.4.2 4'
+# [device.cf20_stock]
+# radio = "radio://0/50/2M/E7E7E71708"
+# bootloader_radio = "radio://0/0/2M/B137AC4698?safelink=0"
+# usb_power_control = '1-1.4.2 4'
