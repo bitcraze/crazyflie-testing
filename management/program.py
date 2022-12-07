@@ -58,11 +58,17 @@ def progress_cb(msg: str, percent: int):
 
 
 def program(fw_file: Path) -> bool:
+    # Setup the alarm handler and ask the OS to send a SIGALRM to the process after TIMEOUT seconds
+    signal.signal(signal.SIGALRM, alarm_handler)
+
     for dev in get_devices():
         try:
+            signal.alarm(TIMEOUT)
             print('Programming device: {}'.format(dev))
             dev.flash(fw_file, progress_cb)
+            signal.alarm(0)
         except Exception as err:
+            signal.alarm(0)
             print('Programming failed: {}'.format(str(err)), file=sys.stderr)
             traceback.print_exc()
             return False
@@ -74,10 +80,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Flash firmware to all devices in site')
     parser.add_argument('--file', type=Path, help='Path to firmware file', required=True)
     p = parser.parse_args()
-
-    # Setup the alarm handler and ask the OS to send a SIGALRM to the process after TIMEOUT seconds
-    signal.signal(signal.SIGALRM, alarm_handler)
-    signal.alarm(TIMEOUT)
 
     if not program(p.file):
         sys.exit(1)
