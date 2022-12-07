@@ -21,6 +21,7 @@ import traceback
 import threading
 import signal
 import sys
+import time
 
 # Timeout for the program operation.
 TIMEOUT = 10 * 60
@@ -37,6 +38,7 @@ from conftest import get_devices  # noqa
 logger = logging.getLogger(__name__)
 
 current_frame = 0
+latest_logging = 0
 
 def alarm_handler(signum, frame):
     print('Timeout!')
@@ -50,10 +52,14 @@ def alarm_handler(signum, frame):
 
 def progress_cb(msg: str, percent: int):
     global current_frame
-    frames = ['◢', '◣', '◤', '◥']
-    frame = frames[current_frame % 4]
+    global latest_logging
 
-    print('{} {}% {}'.format(frame, percent, msg), end='\r')
+    if time.time() > (latest_logging + 3.0):
+        frames = ['◢', '◣', '◤', '◥']
+        frame = frames[current_frame % 4]
+
+        print('{} {}% {}'.format(frame, percent, msg), end='\r')
+        latest_logging = time.time()
     current_frame += 1
 
 
