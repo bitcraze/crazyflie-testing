@@ -78,6 +78,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-d', '--delay', help='Time (in seconds) delay'
                         ' between setting the power for different usb ports.',
                         default=0.3, type=float)
+    parser.add_argument('-w', '--wait', help='Time (in seconds) between on and off for action toggle',
+                        default=20, type=float)
     return parser.parse_args()
 
 
@@ -86,6 +88,7 @@ if __name__ == '__main__':
     args = parse_args()
     action = args.action
     power_on_delay = args.delay
+    on_off_delay = args.wait
 
     # Get all devices from config reader.
     devices = get_devices()
@@ -98,6 +101,7 @@ if __name__ == '__main__':
     # Run the action for the devices.
     if action == USB_Power_Control_Action.RESET:
         run_action(usb_power_control_devices, USB_Power_Control_Action.OFF)
+        time.sleep(on_off_delay)
         run_action(usb_power_control_devices, USB_Power_Control_Action.ON, power_on_delay)
     else:
         run_action(usb_power_control_devices, action, power_on_delay)
