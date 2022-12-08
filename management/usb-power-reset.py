@@ -79,7 +79,7 @@ def parse_args() -> argparse.Namespace:
                         ' between setting the power for different usb ports.',
                         default=0.3, type=float)
     parser.add_argument('-w', '--wait', help='Time (in seconds) between on and off for action toggle',
-                        default=20, type=float)
+                        default=60, type=float)
     return parser.parse_args()
 
 
