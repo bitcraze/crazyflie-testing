@@ -194,32 +194,17 @@ class TestParameters:
             with pytest.raises(AttributeError):
                 scf.cf.param.persistent_get_state(param, state_cb)
 
-    # Stresstest the eeprom by setting, clearing and
-    #  setting the persistent parameter. This will create
-    #  holes in the eeprom memory which needs to be defragmented
-    # once it hits it limit, which should be between 250-300
-    # persistent parameters
 
     def test_param_persistent_eeprom_stress(self, test_setup):
-        wait_for_callback_event = Event()
+        """ Stress test the eeprom by setting and clearing persistent parameters. This will create holes in the eeprom
+            memory which needs to be de-fragmented once it hits this limit, which should be between 250-300 persistent
+            parameters.
+            Clear after store to make sure we do not have too many stored parameters that fill up the memory and
+            prevent further storage.
+        """
 
         max_avg_sec_per_parameter = 0.5  # in sec
-        max_sec_defrac = 3.0  # in sec
-
-        def get_state_callback(complete_name, state):
-            assert state is not None
-            wait_for_callback_event.set()
-
-
-        def is_stored_callback(complete_name, success):
-            assert success
-            wait_for_callback_event.set()
-
-
-        def is_stored_cleared(complete_name, success):
-            assert success
-            wait_for_callback_event.set()
-
+        max_sec_defrag = 3.0  # in sec
 
         def get_all_persistent_param_names(cf):
             persistent_params = []
@@ -231,54 +216,76 @@ class TestParameters:
 
             return persistent_params
 
-        def event_wait_and_clear():
+        def store_persistent(scf, complete_name: str) -> None:
+            wait_for_callback_event = Event()
+
+            def is_done_callback(complete_name, success):
+                assert success
+                wait_for_callback_event.set()
+
+            scf.cf.param.persistent_store(complete_name, callback=is_done_callback)
             assert wait_for_callback_event.wait(timeout=5)
-            wait_for_callback_event.clear()
+
+        def clear_persistent(scf, complete_name: str) -> None:
+            wait_for_callback_event = Event()
+
+            def is_done_callback(complete_name, success):
+                assert success
+                wait_for_callback_event.set()
+
+            scf.cf.param.persistent_clear(complete_name, callback=is_done_callback)
+            assert wait_for_callback_event.wait(timeout=5)
+
+        def is_persistent_stored(scf, complete_name: str) -> bool:
+            wait_for_callback_event = Event()
+            result = False
+
+            def is_done_callback(complete_name, state):
+                nonlocal result
+                result = state.is_stored
+                wait_for_callback_event.set()
+
+            scf.cf.param.persistent_get_state(complete_name, callback=is_done_callback)
+            assert wait_for_callback_event.wait(timeout=5)
+
+            return result
 
         with SyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get the names of all parameters that can be persisted
             persistent_params = get_all_persistent_param_names(scf.cf)
             assert persistent_params is not None
 
-            total_time = []
-            over_maximum_persist_parameter_value = 300
-            len_persist_params = len(persistent_params)
-            loop_iteration = over_maximum_persist_parameter_value // len_persist_params
+            # Clear all persistent parameters that are set
+            for param_name in persistent_params:
+                if is_persistent_stored(scf, param_name):
+                    clear_persistent(scf, param_name)
 
-            # Set all existing parameters, for so many times to
-            # hit the limits of the eeprom's memory
-            for i in range(0, loop_iteration):
+            total_time = []
+
+            count = 300
+            while count > 0:
                 for param_name in persistent_params:
                     start_time = time.time()
-                    scf.cf.param.get_value(param_name)
-                    scf.cf.param.persistent_get_state(param_name, get_state_callback)
-                    event_wait_and_clear()
-                    scf.cf.param.persistent_store(param_name, is_stored_callback)
-                    event_wait_and_clear()
-                    scf.cf.param.persistent_get_state(param_name, get_state_callback)
-                    event_wait_and_clear()
-                    scf.cf.param.persistent_clear(param_name, is_stored_cleared)
-                    event_wait_and_clear()
-                    scf.cf.param.persistent_store(param_name, is_stored_callback)
-                    event_wait_and_clear()
-                    scf.cf.param.persistent_get_state(param_name, get_state_callback)
-                    event_wait_and_clear()
+                    # Store and clear to make sure we do not fill the memory
+                    store_persistent(scf, param_name)
+                    assert is_persistent_stored(scf, param_name)
+                    clear_persistent(scf, param_name)
+                    assert not is_persistent_stored(scf, param_name)
                     total_time.append(time.time() - start_time)
 
-            # Assert when the average time to get, set, get, clear, get,
-            # and set a persist parameter takes longer than 0.5 seconds,
+                    count -= 1
+                    if count < 0:
+                        break
+
+            # Verify average time
             average_time = sum(total_time[1:]) / len(total_time[1:])
+            logger.info(f"Average time {average_time}")
             assert average_time < max_avg_sec_per_parameter
 
-            # Due to the swisscheese in memory due to this test
-            # we can add a test for how long the dfrac action takes
-            # to push all the memory block close to eachother.
-            # This should not take longer than 2 seconds.
-            assert max(total_time[1:]) < max_sec_defrac
-
-            # Clear all set persistent parameters
-            for param_name in persistent_params:
-                scf.cf.param.persistent_clear(param_name, is_stored_cleared)
+            # Verify maximum time, probably at de-frag
+            max_time = max(total_time[1:])
+            logger.info(f"Max time {max_time}")
+            assert max_time < max_sec_defrag
 
     def test_param_set_raw(self, test_setup):
         param = "ring.effect"
