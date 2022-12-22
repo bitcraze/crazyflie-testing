@@ -6,7 +6,7 @@ page_id: dev_sites
 The `crazyflie-testing` infrastructures works by applying operations or tests on a collection of devices, called *sites*.
 A site is defined by a *toml* file, following a certain format.
 
-All site definition files are place in the `sites/` directory, and the files should end in `.toml`. In order to make use of them you set the `CRAZY_SITE` enviroment variable, for example:
+All site definition files are place in the `sites/` directory, and the files should end in `.toml`. In order to make use of them you set the `CRAZY_SITE` environment variable, for example:
 
 ```bash
 CRAZY_SITE=single-cf python3 management/program --file my-firmware.bin
@@ -54,7 +54,7 @@ bootloader_radio = "radio://0/0/2M/B1CEE678C5?safelink=0"
 [...]
 ```
 
-Using this site definition the infrasturcture in this repository can make sure that operations like flashing or bootloader recovery as well as running test cases can be done for all devices defined.
+Using this site definition the infrastructure in this repository can make sure that operations like flashing or bootloader recovery as well as running test cases can be done for all devices defined.
 
 ## Adding your own site
 

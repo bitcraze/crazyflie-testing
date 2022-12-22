@@ -12,7 +12,7 @@ Before running the test suite you need to define a site in the `sites/` folder.
 The site `TOML` tells the test suite which devices to tests, what capabilities
 and decks they have, and how to reach them.
 
-See [site docmentation](docs/sites.md) for the site file format to define new test sites.
+See [site docmentation](docs/development/sites.md) for the site file format to define new test sites.
 ## Running the test
 
 To run the test for a single Crazyflie, run:
