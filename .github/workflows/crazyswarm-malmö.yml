@@ -32,25 +32,25 @@ jobs:
           ros-noetic-tf ros-noetic-tf-conversions python3-toml python3-pip
 
       - name: Check out sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download latest firmware files
         with:
           repo: bitcraze/crazyflie-release
           workflow: nightly.yml
-        uses: dawidd6/action-download-artifact@v2.14.0
+        uses: dawidd6/action-download-artifact@v2
 
       - name: Check out sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download latest firmware files
         with:
           repo: bitcraze/crazyflie-release
           workflow: nightly.yml
-        uses: dawidd6/action-download-artifact@v2.14.0
+        uses: dawidd6/action-download-artifact@v2
 
       - name: Checkout Crazyswarm
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: USC-ACTLab/crazyswarm
           path: crazyswarm
