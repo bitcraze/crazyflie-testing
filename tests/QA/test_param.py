@@ -220,6 +220,9 @@ class TestParameters:
             wait_for_callback_event = Event()
 
             def is_done_callback(complete_name, success):
+                if not success:
+                    dump_storage_stats(scf)
+
                 assert success
                 wait_for_callback_event.set()
 
@@ -250,7 +253,16 @@ class TestParameters:
 
             return result
 
+        def dump_storage_stats(scf):
+            print('Dumping storage stats...')
+            scf.cf.param.set_value('system.storageStats', 1)
+            # Wait for logs to arrive
+            time.sleep(1)
+
         with SyncCrazyflie(test_setup.device.link_uri) as scf:
+            # Enable logging to print stats if dump_storage_stats() is called
+            scf.cf.console.receivedChar.add_callback(lambda msg: print(f'Console log: {msg}'))
+
             # Get the names of all parameters that can be persisted
             persistent_params = get_all_persistent_param_names(scf.cf)
             assert persistent_params is not None
