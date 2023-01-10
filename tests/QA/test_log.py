@@ -40,7 +40,11 @@ class TestLogVariables:
     def test_log_async(self, test_setup):
         ''' Make sure we receive ~100 rows 1 second at 100Hz '''
         requirement = conftest.get_requirement('logging.basic')
-        config = init_log_max_bytes()
+        expected_rate = requirement['max_rate']  # Hz
+        period_in_ms = int(1000 / expected_rate)
+        duration = 5.0
+
+        config = init_log_max_bytes(period_in_ms=period_in_ms)
         rows = 0
 
         def log_callback(ts, data, config):
@@ -53,11 +57,12 @@ class TestLogVariables:
             config.data_received_cb.add_callback(log_callback)
 
             config.start()
-            time.sleep(1)
+            time.sleep(duration)
             config.stop()
 
-            # With 100 ms frequency we expect 100 rows, allow 3% diff
-            assert abs(requirement['max_rate'] - rows) < 3
+            # Allow for 3% diff
+            actual_rate = rows / duration
+            assert_within_percentage(expected_rate, actual_rate, 3)
 
     def test_log_too_many_variables(self, test_setup):
         '''
@@ -146,15 +151,19 @@ class TestLogVariables:
             pytest.skip('Only on non-kalman')
 
         configs = []
-        for i in range(int(requirement['limit_low'] / 100)):
-            configs.append(init_log_max_bytes('MaxGroup_%d' % i))
+        duration = 10.0
+        period_in_ms = 10
+        expected_rate_per_block = 1000 / period_in_ms  # Hz
+        expected_total_rate = requirement['limit_low']  # Hz
+        nr_of_log_blocks = int(expected_total_rate / expected_rate_per_block)
+        for i in range(nr_of_log_blocks):
+            configs.append(init_log_max_bytes(f'MaxGroup_{i}', period_in_ms=period_in_ms))
 
         packets = defaultdict(lambda: 0)
 
         def stress_cb(ts, data, config):
             packets[config.name] += 1
 
-        duration = 10.0
         with SyncCrazyflie(test_setup.device.link_uri) as scf:
             scf.cf.console.receivedChar.add_callback(lambda msg: print(msg))
             for config in configs:
@@ -166,10 +175,12 @@ class TestLogVariables:
 
             for config in configs:
                 config.stop()
-                assert packets[config.name] >= duration * 100.0  # 100 Hz
+                # Check the number of packets we got per config, allow for 3% margin.
+                actual_rate_per_block = packets[config.name] / duration
+                assert_within_percentage(expected_rate_per_block, actual_rate_per_block, 3)
 
-            rate = sum(packets.values()) / duration
-            assert rate >= requirement['limit_low']  # packets / second
+            actual_total_rate = sum(packets.values()) / duration
+            assert_within_percentage(expected_total_rate, actual_total_rate, 3)
 
     def test_log_sync(self, test_setup):
         ''' Make sure logging synchronous works '''
@@ -184,9 +195,9 @@ class TestLogVariables:
                         break
 
 
-def init_log_max_bytes(name='MaxGroup'):
+def init_log_max_bytes(name: str='MaxGroup', period_in_ms: int=10) -> LogConfig:
     ''' 7 variables * MAX_GROUPS (16) = 112 which is < MAX_VARIABLES (128) '''
-    config = LogConfig(name=name, period_in_ms=10)
+    config = LogConfig(name=name, period_in_ms=period_in_ms)
     config.add_variable('stabilizer.roll', 'float')       # 04 bytes
     config.add_variable('stabilizer.pitch', 'float')      # 08 bytes
     config.add_variable('stabilizer.yaw', 'float')        # 12 bytes
@@ -203,3 +214,9 @@ def assert_variables_included(data, variables):
     assert len(data) == len(variables)
     for v in variables:
         assert v.name in data
+
+
+def assert_within_percentage(expected: float, actual: float, max_diff_percent: float):
+    max_diff = expected * max_diff_percent
+    assert actual >= expected - max_diff
+    assert actual <= expected + max_diff
