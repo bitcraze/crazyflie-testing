@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Bitcraze AB
+# Copyright (C) 2021 - 2023 Bitcraze AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 import pytest
 import conftest
-import time
+from cflib.crazyflie.log import LogConfig
+from cflib.crazyflie.syncLogger import SyncLogger
 
 
 #
@@ -44,3 +45,30 @@ class TestDecks:
         for deck in test_setup.device.decks:
             is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
             assert is_deck_present
+
+
+    def test_loco_deck_loop_is_running(self, test_setup):
+        '''
+        Check that the event loop in the loco deck driver is running, this is indicated by read and writes to the SPI
+        bus.
+        '''
+        if not test_setup.has_loco_deck:
+            pytest.skip('Only on loco decks')
+
+        assert test_setup.device.connect_sync()
+
+        READ_LOG = 'loco.spiRe'
+        WRITE_LOG = 'loco.spiWr'
+
+        log_config = LogConfig(name='locodeck', period_in_ms=10)
+        log_config.add_variable(READ_LOG, 'float')
+        log_config.add_variable(WRITE_LOG, 'float')
+
+        with SyncLogger(test_setup.device.cf, log_config) as logger:
+            for entry in logger:
+                read_rate = entry[1][READ_LOG]
+                write_rate = entry[1][WRITE_LOG]
+
+                assert read_rate > 10.0
+                assert write_rate > 10.0
+                break

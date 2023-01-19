@@ -7,3 +7,9 @@ It must be possible to detect, by way of the parameter interface, which decks
 that are currently detected and initialized correctly on the Crazyflie.
 """
 rational = "Design"
+
+[requirement.decks.loco.basic]
+description = """
+The Loco deck must run when attached to a Crazyflie.
+"""
+rational = "Design"

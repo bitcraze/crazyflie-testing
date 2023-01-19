@@ -224,6 +224,11 @@ class DeviceFixture:
         else:
             return False
 
+    @property
+    def has_loco_deck(self) -> bool:
+        if self._device.decks:
+            return 'bcDWM1000' in self._device.decks
+        return False
 
 @pytest.fixture
 def test_setup(request):
