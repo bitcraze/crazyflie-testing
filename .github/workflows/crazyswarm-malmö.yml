@@ -3,8 +3,8 @@ name: Crazyswarm test 🐝
 # Controls when the action will run.
 on:
   workflow_dispatch:
-  # schedule:
-  # - cron:  '0 4 * * *'
+  schedule:
+  - cron:  '0 4 * * *'
 
 jobs:
   swarm_at_crazylab:
