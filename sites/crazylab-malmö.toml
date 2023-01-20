@@ -46,8 +46,8 @@ radio = "radio://0/50/2M/E7E7E71708"
 bootloader_radio = "radio://0/0/2M/B137AC4698?safelink=0"
 usb_power_control = '1-1.4.2 4'
 
-[device.cf21_loco]
-radio = "radio://0/50/2M/E7E7E71709"
-bootloader_radio = "radio://0/0/2M/B1CDCAD644?safelink=0"
-decks = ["bcDWM1000"]
-usb_power_control = '1-1.4.3 1'
+# [device.cf21_loco]
+# radio = "radio://0/50/2M/E7E7E71709"
+# bootloader_radio = "radio://0/0/2M/B1CDCAD644?safelink=0"
+# decks = ["bcDWM1000"]
+# usb_power_control = '1-1.4.3 1'
