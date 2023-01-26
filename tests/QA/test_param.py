@@ -18,7 +18,7 @@ import time
 import random
 from threading import Event
 
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+from conftest import ValidatedSyncCrazyflie
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 )
 class TestParameters:
     def test_param_ronly(self, test_setup: conftest.DeviceFixture):
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get a known (core) read-only parameter
             param = "deck.bcLighthouse4"
             element = scf.cf.param.toc.get_element_by_complete_name(param)
@@ -52,21 +52,22 @@ class TestParameters:
                 scf.cf.param.set_value(param, 1)
 
     def test_param_extended_type(self, test_setup: conftest.DeviceFixture):
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
-            # Get a known persistent parameter
-            param = "ring.effect"
-            element = scf.cf.param.toc.get_element_by_complete_name(param)
-            assert element is not None
-            assert element.is_extended()
-            assert element.is_persistent()
+        assert test_setup.device.connect_sync()
 
-            # And a known non-persistent parameter
-            param = "stabilizer.stop"
-            element = scf.cf.param.toc.get_element_by_complete_name(param)
-            print(element.is_persistent)
-            assert element is not None
-            assert not element.is_extended()
-            assert not element.is_persistent()
+        # Get a known persistent parameter
+        param = "ring.effect"
+        element = test_setup.device.cf.param.toc.get_element_by_complete_name(param)
+        assert element is not None
+        assert element.is_extended()
+        assert element.is_persistent()
+
+        # And a known non-persistent parameter
+        param = "stabilizer.stop"
+        element = test_setup.device.cf.param.toc.get_element_by_complete_name(param)
+        print(element.is_persistent)
+        assert element is not None
+        assert not element.is_extended()
+        assert not element.is_persistent()
 
     def test_param_persistent_store(self, test_setup: conftest.DeviceFixture):
         # Get a known persistent parameter
@@ -75,92 +76,96 @@ class TestParameters:
         # Get a random valid value
         value = random.randint(8, 13)
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
-            # Set Value
-            logger.info(f"Setting value {value} as {param}")
-            scf.cf.param.set_value(param, value)
+        assert test_setup.device.connect_sync()
 
-            got_callback = False
+        # Set Value
+        logger.info(f"Setting value {value} as {param}")
+        test_setup.device.cf.param.set_value(param, value)
 
-            def store_cb(name, success):
-                nonlocal got_callback
-                assert name == param
-                assert success
+        got_callback = False
 
-                got_callback = True
+        def store_cb(name, success):
+            nonlocal got_callback
+            assert name == param
+            assert success
 
-            scf.cf.param.persistent_store(param, store_cb)
-            tries = 5
-            while not got_callback and tries > 0:
-                time.sleep(1)
-                tries -= 1
-            assert got_callback
+            got_callback = True
 
-            test_setup.device.reboot()
+        test_setup.device.cf.param.persistent_store(param, store_cb)
+        tries = 5
+        while not got_callback and tries > 0:
+            time.sleep(1)
+            tries -= 1
+        assert got_callback
+
+        test_setup.device.cf.close_link()
+        test_setup.device.reboot()
 
         # Allow time to reboot
         time.sleep(5)
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
-            val = scf.cf.param.get_value(param)
-            assert int(val) == value
+        assert test_setup.device.connect_sync()
+
+        val = test_setup.device.cf.param.get_value(param)
+        assert int(val) == value
 
     def test_param_persistent_clear(self, test_setup: conftest.DeviceFixture):
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
-            # Get a known persistent parameter
-            param = "sound.effect"
+        assert test_setup.device.connect_sync()
 
-            gotten_state = False
+        # Get a known persistent parameter
+        param = "sound.effect"
 
-            def clear_cb(name, success):
-                assert name == param
-                assert success
+        gotten_state = False
 
-            def state_cb_1(name, state):
-                nonlocal gotten_state
+        def clear_cb(name, success):
+            assert name == param
+            assert success
 
-                assert name == param
+        def state_cb_1(name, state):
+            nonlocal gotten_state
 
-                assert state is not None
-                assert isinstance(state.is_stored, bool)
-                assert state.default_value == 0
-                if state.is_stored:
-                    scf.cf.param.persistent_clear(param, clear_cb)
-                    assert state.stored_value is not None
-                else:
-                    assert state.stored_value is None
+            assert name == param
 
-                gotten_state = True
+            assert state is not None
+            assert isinstance(state.is_stored, bool)
+            assert state.default_value == 0
+            if state.is_stored:
+                test_setup.device.cf.param.persistent_clear(param, clear_cb)
+                assert state.stored_value is not None
+            else:
+                assert state.stored_value is None
 
-            scf.cf.param.persistent_get_state(param, state_cb_1)
-            tries = 5
-            while not gotten_state and tries > 0:
-                time.sleep(1)
-                tries -= 1
-            assert gotten_state
+            gotten_state = True
 
-            # Allow time to reboot
-            time.sleep(5)
-            gotten_state = False
+        test_setup.device.cf.param.persistent_get_state(param, state_cb_1)
+        tries = 5
+        while not gotten_state and tries > 0:
+            time.sleep(1)
+            tries -= 1
+        assert gotten_state
 
-            def state_cb_2(name, state):
-                nonlocal gotten_state
+        # Allow time to reboot
+        time.sleep(5)
+        gotten_state = False
 
-                assert name == param
-                assert state is not None
-                assert isinstance(state.is_stored, bool)
-                assert not state.is_stored
-                gotten_state = True
+        def state_cb_2(name, state):
+            nonlocal gotten_state
 
-            scf.cf.param.persistent_get_state(param, state_cb_2)
-            tries = 5
-            while not gotten_state and tries > 0:
-                time.sleep(1)
-                tries -= 1
-            assert gotten_state
+            assert name == param
+            assert state is not None
+            assert isinstance(state.is_stored, bool)
+            assert not state.is_stored
+            gotten_state = True
+
+        test_setup.device.cf.param.persistent_get_state(param, state_cb_2)
+        tries = 5
+        while not gotten_state and tries > 0:
+            time.sleep(1)
+            tries -= 1
+        assert gotten_state
 
     def test_param_persistent_get_state(self, test_setup: conftest.DeviceFixture):
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get a known persistent parameter
             param = "sound.effect"
 
@@ -259,10 +264,7 @@ class TestParameters:
             # Wait for logs to arrive
             time.sleep(1)
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
-            # Enable logging to print stats if dump_storage_stats() is called
-            scf.cf.console.receivedChar.add_callback(lambda msg: print(f'Console log: {msg}'))
-
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get the names of all parameters that can be persisted
             persistent_params = get_all_persistent_param_names(scf.cf)
             assert persistent_params is not None
@@ -313,7 +315,7 @@ class TestParameters:
             assert value == int(val)
             updated = True
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             [group, name] = param.split(".")
 
             scf.wait_for_params()
@@ -340,7 +342,7 @@ class TestParameters:
             assert name == param
             assert expected.pop(0) == int(value)
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             [group, name] = param.split(".")
 
             initial = scf.cf.param.get_value(param)

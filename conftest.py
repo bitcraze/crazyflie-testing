@@ -10,6 +10,7 @@ import glob
 import struct
 import sys
 import subprocess
+from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from threading import Event
 from typing import Callable, List, NoReturn, Optional
 
@@ -59,8 +60,7 @@ class BCDevice:
 
         self.cf = Crazyflie(rw_cache='./cache')
 
-        self.console_log = ''
-        self.cf.console.receivedChar.add_callback(self._console_cb)
+        self.cf.console.receivedChar.add_callback(_console_cb)
 
         self.bl = Bootloader(self.link_uri)
 
@@ -138,21 +138,14 @@ class BCDevice:
         else:
             uri = self.link_uri + querystring
 
-        is_success = self._wait_for_full_connection(self.cf, uri, self.CONNECT_TIMEOUT)
-        if is_success:
-            is_success = self._verify_cf_self_test_pass(self.cf)
-
-            if not is_success:
-                # Wait a bit for all console logs to arrive
-                time.sleep(0.5)
-                print(f'The Crazyflie did not pass self tests ({uri})')
-                print('--- Begin dump console log')
-                print(self.console_log)
-                print('--- End dump console log')
+        is_self_test_pass = False
+        is_connected = self._wait_for_full_connection(self.cf, uri, self.CONNECT_TIMEOUT)
+        if is_connected:
+            is_self_test_pass = _verify_cf_self_test_pass(self.cf, uri)
         else:
             print(f'Failed to connect to Crazyflie at {uri}')
 
-        return is_success
+        return is_connected and is_self_test_pass
 
     def set_usb_power(self, action: USB_Power_Control_Action) -> bool:
         if self.usb_power_control is None:
@@ -199,14 +192,6 @@ class BCDevice:
         cf.fully_connected.remove_callback(connection_cb)
 
         return is_connection_success
-
-    def _verify_cf_self_test_pass(self, cf: Crazyflie) -> bool:
-        selftest_passed = cf.param.get_value('system.selftestPassed')
-        result = bool(int(selftest_passed))
-        return result
-
-    def _console_cb(self, msg):
-        self.console_log += msg
 
 class DeviceFixture:
     def __init__(self, dev: BCDevice):
@@ -347,6 +332,27 @@ def get_swarm() -> List[BCDevice]:
     return devices
 
 
+def _verify_cf_self_test_pass(cf: Crazyflie, uri: str) -> bool:
+    is_self_test_pass = bool(int(cf.param.get_value('system.selftestPassed')))
+
+    if not is_self_test_pass:
+        print(f'The Crazyflie did not pass self tests ({uri})')
+
+        # Trigger a dump of assert info
+        cf.param.set_value('system.assertInfo', 1)
+
+        # Wait a bit for all console logs to arrive
+        time.sleep(0.5)
+
+        # Console logs are captured and printed by default, but are only displayed when a test case fails.
+
+    return is_self_test_pass
+
+def _console_cb(msg):
+    # Prints are only displayed if a dest fails
+    print(f'Console: {msg}')
+
+
 class Requirements(dict):
     _instance = None
 
@@ -378,3 +384,21 @@ class Requirements(dict):
 def get_requirement(requirement: str):
     group, name = requirement.split('.')
     return Requirements.instance()['requirement'][group][name]
+
+
+class ValidatedSyncCrazyflie(SyncCrazyflie):
+    """Use this class instead of SyncCrazyflie in tests. This class does extra checks when connecting to make sure
+    the CF is OK.
+    """
+    def __init__(self, link_uri: str, cf=None):
+        super().__init__(link_uri, cf=cf)
+
+    def __enter__(self):
+        self.open_link()
+
+        self.cf.console.receivedChar.add_callback(_console_cb)
+
+        is_self_test_pass = _verify_cf_self_test_pass(self.cf, self._link_uri)
+        assert is_self_test_pass
+
+        return self

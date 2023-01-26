@@ -26,7 +26,7 @@ This script reads a list of persistent parameters, sets, clears and sets
 each one of them. This will cause a swiss cheese effect in the eemprom memory,
 which will be defracmented after about 270 set-resets.
 
-This script also monitors the times that each operation takes. 
+This script also monitors the times that each operation takes.
 
 Setting the WITH_PLOTTING define to True, these times will be plotted as well.
 """
@@ -37,7 +37,7 @@ import time
 
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+from conftest import ValidatedSyncCrazyflie
 from cflib.utils import uri_helper
 
 WITH_PLOTTING = False
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     cf = Crazyflie(rw_cache="./cache")
 
-    with SyncCrazyflie(uri, cf=cf) as scf:
+    with ValidatedSyncCrazyflie(uri, cf=cf) as scf:
         # Get the names of all parameters that can be persisted
         persistent_params = get_all_persistent_param_names(scf.cf)
 

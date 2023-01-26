@@ -18,7 +18,7 @@ import time
 from collections import defaultdict
 
 from cflib.crazyflie.log import LogConfig
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+from conftest import ValidatedSyncCrazyflie
 from cflib.crazyflie.syncLogger import SyncLogger
 
 
@@ -52,7 +52,7 @@ class TestLogVariables:
             rows += 1
             assert_variables_included(data, config.variables)
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             scf.cf.log.add_config(config)
             config.data_received_cb.add_callback(log_callback)
 
@@ -164,8 +164,7 @@ class TestLogVariables:
         def stress_cb(ts, data, config):
             packets[config.name] += 1
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
-            scf.cf.console.receivedChar.add_callback(lambda msg: print(msg))
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             for config in configs:
                 scf.cf.log.add_config(config)
                 config.data_received_cb.add_callback(stress_cb)
@@ -187,7 +186,7 @@ class TestLogVariables:
         requirement = conftest.get_requirement('logging.basic')
         config = init_log_max_bytes()
 
-        with SyncCrazyflie(test_setup.device.link_uri) as scf:
+        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             with SyncLogger(scf, config) as logger:
                 for rows, (ts, data, config) in enumerate(logger):
                     assert_variables_included(data, config.variables)

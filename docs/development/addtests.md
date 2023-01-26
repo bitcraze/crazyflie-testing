@@ -12,6 +12,35 @@ Tests should be added under the `tests/` folder. Right now we have a convention 
 We also have a special folder `tests/crazyswarm` for tests that are special to the [Crazyswarm project](https://crazyswarm.readthedocs.io/en/latest/).
 
 
+## Connecting to the Crazyflie
+
+There are two main ways to connect to a Crazyflie in a test. These methods adds extra functionality that checks the
+state of the Crazyflie after connection to make sure the self tests passed (that it has not asserted) as well as
+automatically starts collection of console logs. Note that console logs only are displayed when a test fails.
+
+### Option 1 - using connect_sync():
+
+Use the `connect_sync()` method.
+
+``` python
+# Make sure to assert the result of connect_sync()
+assert test_setup.device.connect_sync()
+# You can now access the connected Crazyflie through test_setup.device.cf
+element = test_setup.device.cf.param.toc.get_element_by_complete_name('my.param')
+# The connection is automatically closed when the test ends
+
+```
+
+### Option 2 - using ValidatedSyncCrazyflie
+
+The `ValidatedSyncCrazyflie` class behaves like `SyncCrazyflie` but with added checks when connected.
+
+``` python
+with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
+    # Do stuff with scf
+    # The connection is closed when scf goes out of scope
+```
+
 ## Example test
 For an example of how an pytest, interacting with sites, can look, see below:
 
