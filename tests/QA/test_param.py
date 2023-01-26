@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
     ids=lambda d: d.name
 )
 class TestParameters:
-    def test_param_ronly(self, test_setup):
+    def test_param_ronly(self, test_setup: conftest.DeviceFixture):
         with SyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get a known (core) read-only parameter
             param = "deck.bcLighthouse4"
@@ -51,7 +51,7 @@ class TestParameters:
             with pytest.raises(AttributeError):
                 scf.cf.param.set_value(param, 1)
 
-    def test_param_extended_type(self, test_setup):
+    def test_param_extended_type(self, test_setup: conftest.DeviceFixture):
         with SyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get a known persistent parameter
             param = "ring.effect"
@@ -68,7 +68,7 @@ class TestParameters:
             assert not element.is_extended()
             assert not element.is_persistent()
 
-    def test_param_persistent_store(self, test_setup):
+    def test_param_persistent_store(self, test_setup: conftest.DeviceFixture):
         # Get a known persistent parameter
         param = "sound.effect"
 
@@ -105,7 +105,7 @@ class TestParameters:
             val = scf.cf.param.get_value(param)
             assert int(val) == value
 
-    def test_param_persistent_clear(self, test_setup):
+    def test_param_persistent_clear(self, test_setup: conftest.DeviceFixture):
         with SyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get a known persistent parameter
             param = "sound.effect"
@@ -159,7 +159,7 @@ class TestParameters:
                 tries -= 1
             assert gotten_state
 
-    def test_param_persistent_get_state(self, test_setup):
+    def test_param_persistent_get_state(self, test_setup: conftest.DeviceFixture):
         with SyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get a known persistent parameter
             param = "sound.effect"
@@ -195,7 +195,7 @@ class TestParameters:
                 scf.cf.param.persistent_get_state(param, state_cb)
 
 
-    def test_param_persistent_eeprom_stress(self, test_setup):
+    def test_param_persistent_eeprom_stress(self, test_setup: conftest.DeviceFixture):
         """ Stress test the eeprom by setting and clearing persistent parameters. This will create holes in the eeprom
             memory which needs to be de-fragmented once it hits this limit, which should be between 250-300 persistent
             parameters.
@@ -299,7 +299,7 @@ class TestParameters:
             logger.info(f"Max time {max_time}")
             assert max_time < max_sec_defrag
 
-    def test_param_set_raw(self, test_setup):
+    def test_param_set_raw(self, test_setup: conftest.DeviceFixture):
         param = "ring.effect"
         value = 13  # Gravity effect
         updated = False
@@ -330,7 +330,7 @@ class TestParameters:
 
             assert updated
 
-    def test_param_set(self, test_setup):
+    def test_param_set(self, test_setup: conftest.DeviceFixture):
         param = "stabilizer.estimator"
 
         def param_cb(name: str, value: str):

@@ -29,23 +29,23 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.parametrize('dev', conftest.get_devices(), ids=lambda d: d.name)
 class TestRadio:
-    def test_latency_small_packets(self, dev):
+    def test_latency_small_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.latencysmall')
         assert(latency(dev.link_uri, requirement['packet_size']) < requirement['limit_high_ms'])
 
-    def test_latency_big_packets(self, dev):
+    def test_latency_big_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.latencybig')
         assert(latency(dev.link_uri, requirement['packet_size']) < requirement['limit_high_ms'])
 
-    def test_bandwidth_small_packets(self, dev):
+    def test_bandwidth_small_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.bwsmall')
         assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
-    def test_bandwidth_big_packets(self, dev):
+    def test_bandwidth_big_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.bwbig')
         assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
-    def test_reliability(self, dev):
+    def test_reliability(self, dev: conftest.BCDevice):
         '''
         This test does not pass reliably. We need flow control between nrf
         and stm32.

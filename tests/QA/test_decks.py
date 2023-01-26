@@ -16,7 +16,6 @@ import conftest
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
 
-
 #
 # Using the indirect=True parameter when parametrizing a test allows to
 # parametrize a test with a fixture receiving the values before passing them to
@@ -32,7 +31,7 @@ from cflib.crazyflie.syncLogger import SyncLogger
 )
 class TestDecks:
 
-    def test_deck_present(self, test_setup):
+    def test_deck_present(self, test_setup: conftest.DeviceFixture):
         '''
         Check that all decks defined for the device in the site
         is detected, using the parameter interface.
@@ -47,7 +46,7 @@ class TestDecks:
             assert is_deck_present
 
 
-    def test_loco_deck_loop_is_running(self, test_setup):
+    def test_loco_deck_loop_is_running(self, test_setup: conftest.DeviceFixture):
         '''
         Check that the event loop in the loco deck driver is running, this is indicated by read and writes to the SPI
         bus.

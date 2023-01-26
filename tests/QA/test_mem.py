@@ -25,7 +25,7 @@ from cflib.crazyflie.mem import MemoryElement
 )
 
 class TestMem:
-    def test_mem_ow(self, test_setup):
+    def test_mem_ow(self, test_setup: conftest.DeviceFixture):
         '''
         Check that we can read the One Wire memory from decks and that it matches the deck.
         '''
