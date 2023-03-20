@@ -24,6 +24,11 @@ crazyflies:
   initialPosition: [0.0, 0.0, 0.0]
   type: default
 
+- id: 0xA6
+  channel: 42
+  initialPosition: [0.0, 0.0, 0.0]
+  type: default
+
 - id: 0xA7
   channel: 42
   initialPosition: [0.0, 0.0, 0.0]
