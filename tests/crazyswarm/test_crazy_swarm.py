@@ -15,6 +15,7 @@ import pytest
 import logging
 import os
 import random
+import rospy
 import sys
 
 try:
@@ -24,12 +25,15 @@ try:
     )
     sys.path.append(os.path.join(crazyswarm_path, 'ros_ws/src/crazyflie_ros'))
     from pycrazyswarm import Crazyswarm
+    from crazyswarm.msg import GenericLogData
 except KeyError:
     print('CRAZYSWARM_PATH or CRAZYSWARM_YAML not set', file=sys.stderr)
-    pytest.skip()
+    # pytest.skip()
+    sys.exit(17)
 except ImportError:
     print('Failed to import pycrazyswarm', file=sys.stderr)
-    pytest.skip()
+    # pytest.skip()
+    sys.exit(18)
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +65,25 @@ class TestCrazyswarm:
         swarm.allcfs.setParam('commander/enHighLevel', 1)
 
     def test_set_cf_param_broadcast(self):
-        swarm.allcfs.setParam('stabilizer/controller', 2)
-        for cf in swarm.allcfs.crazyflies:
-            assert cf.getParam('stabilizer/controller') == 2
-        swarm.allcfs.setParam('stabilizer/controller', 1)
+        logval = 0
+        def log_callback(value):
+            nonlocal logval
+            logval = int(value.values[0])
+
+        # The delay from a broadcast is send until it shows up in the log topic. Not sure why it takes so long
+        topic_sleep_time = 2
+
+        # Set up logging of the first CF
+        rospy.Subscriber('/cf' + str(swarm.allcfs.crazyflies[0].id) + '/log1', GenericLogData, log_callback, queue_size=1)
+
+        # Broadcast a value, wait for data to bounce back and check the value comes back in the log
+        swarm.allcfs.setParam('system/testLogParam', 18)
+        # Wait a looong time for the log value to update the topic
+        rospy.sleep(topic_sleep_time)
+        assert 18 == logval
+
+        # Broadcast a new value, wait for data to bounce back and check the value comes back in the log
+        swarm.allcfs.setParam('system/testLogParam', 47)
+        # Wait a looong time for the log value to update the topic
+        rospy.sleep(topic_sleep_time)
+        assert 47 == logval

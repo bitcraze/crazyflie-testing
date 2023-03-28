@@ -11,7 +11,8 @@
       # Logging configuration (Use enable_logging to actually enable logging)
       genericLogTopics: ["log1"]
       genericLogTopicFrequencies: [10]
-      genericLogTopic_log1_Variables: ["stateEstimate.x", "ctrltarget.x"]
+      # sys.testLogParam is used to test broadcast
+      genericLogTopic_log1_Variables: ["sys.testLogParam"]
       firmwareParams:
         commander:
           enHighLevel: 1
@@ -27,7 +28,7 @@
       write_csvs: False
       force_no_cache: False
       enable_parameters: True
-      enable_logging: False
+      enable_logging: True
     </rosparam>
   </node>
 </launch>
