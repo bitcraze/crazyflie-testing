@@ -60,9 +60,8 @@ class TestCrazyswarm:
                 assert cf.getParam('commander/enHighLevel') == 1
         swarm.allcfs.setParam('commander/enHighLevel', 1)
 
-    # Should this work? It seems it doesn't @whoenig what is the deal?
-    # def test_set_cf_param_broadcast(self):
-    #     swarm.allcfs.setParam('stabilizer/controller', 2)
-    #     for cf in swarm.allcfs.crazyflies:
-    #         assert cf.getParam('stabilizer/controller') == 2
-    #     swarm.allcfs.setParam('stabilizer/controller', 1)
+    def test_set_cf_param_broadcast(self):
+        swarm.allcfs.setParam('stabilizer/controller', 2)
+        for cf in swarm.allcfs.crazyflies:
+            assert cf.getParam('stabilizer/controller') == 2
+        swarm.allcfs.setParam('stabilizer/controller', 1)
