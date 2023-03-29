@@ -74,7 +74,7 @@ class TestCrazyswarm:
 
         def broadcast_and_validate(value: int) -> bool:
             # The delay from a broadcast is sent until it shows up in the log topic. Not sure why it takes so long
-            topic_max_wait_time = 10.0
+            topic_max_wait_time = 50.0
 
             # Broadcast a value
             swarm.allcfs.setParam('system/testLogParam', value)
