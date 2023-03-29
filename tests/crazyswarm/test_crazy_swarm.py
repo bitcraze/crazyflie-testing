@@ -17,6 +17,7 @@ import os
 import random
 import rospy
 import sys
+import time
 
 try:
     crazyswarm_path = os.environ['CRAZYSWARM_PATH']
@@ -65,25 +66,28 @@ class TestCrazyswarm:
         swarm.allcfs.setParam('commander/enHighLevel', 1)
 
     def test_set_cf_param_broadcast(self):
-        logval = 0
+        log_val = 0
         def log_callback(value):
-            nonlocal logval
-            logval = int(value.values[0])
+            nonlocal log_val
+            log_val = int(value.values[0])
 
-        # The delay from a broadcast is send until it shows up in the log topic. Not sure why it takes so long
-        topic_sleep_time = 2
+        def broadcast_and_validate(value: int) -> bool:
+            # The delay from a broadcast is sent until it shows up in the log topic. Not sure why it takes so long
+            topic_max_wait_time = 10.0
 
-        # Set up logging of the first CF
+            # Broadcast a value
+            swarm.allcfs.setParam('system/testLogParam', value)
+
+            # Wait for the value to appear in the log
+            end_time = time.time() + topic_max_wait_time
+            while time.time() < end_time:
+                rospy.sleep(0.3)
+                if log_val == value:
+                    return True
+            return False
+
+        # Set up logging for the first CF
         rospy.Subscriber('/cf' + str(swarm.allcfs.crazyflies[0].id) + '/log1', GenericLogData, log_callback, queue_size=1)
 
-        # Broadcast a value, wait for data to bounce back and check the value comes back in the log
-        swarm.allcfs.setParam('system/testLogParam', 18)
-        # Wait a looong time for the log value to update the topic
-        rospy.sleep(topic_sleep_time)
-        assert 18 == logval
-
-        # Broadcast a new value, wait for data to bounce back and check the value comes back in the log
-        swarm.allcfs.setParam('system/testLogParam', 47)
-        # Wait a looong time for the log value to update the topic
-        rospy.sleep(topic_sleep_time)
-        assert 47 == logval
+        assert broadcast_and_validate(47)
+        assert broadcast_and_validate(11)
