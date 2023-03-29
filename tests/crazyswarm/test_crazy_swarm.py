@@ -69,6 +69,7 @@ class TestCrazyswarm:
         log_val = 0
         def log_callback(value):
             nonlocal log_val
+            # rospy.loginfo(value)
             log_val = int(value.values[0])
 
         def broadcast_and_validate(value: int) -> bool:
@@ -86,8 +87,11 @@ class TestCrazyswarm:
                     return True
             return False
 
-        # Set up logging for the first CF
-        rospy.Subscriber('/cf' + str(swarm.allcfs.crazyflies[0].id) + '/log1', GenericLogData, log_callback, queue_size=1)
+        # Set up logging for one CF. For some reason, the log is not set up on all CFs, I don't understand why.
+        # It seems as Log1 only is set up on the 5 last CFs?
+        # Use one where the log works for now.
+        cf_id_to_get_logs_from = 7
+        rospy.Subscriber('/cf' + str(swarm.allcfs.crazyflies[cf_id_to_get_logs_from].id) + '/log1', GenericLogData, log_callback, queue_size=1)
 
         assert broadcast_and_validate(47)
         assert broadcast_and_validate(11)

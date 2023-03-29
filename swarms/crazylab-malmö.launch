@@ -10,7 +10,7 @@
       world_frame: "/world"
       # Logging configuration (Use enable_logging to actually enable logging)
       genericLogTopics: ["log1"]
-      genericLogTopicFrequencies: [10]
+      genericLogTopicFrequencies: [1000]
       # sys.testLogParam is used to test broadcast
       genericLogTopic_log1_Variables: ["sys.testLogParam"]
       firmwareParams:
