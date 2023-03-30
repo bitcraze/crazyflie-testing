@@ -27,14 +27,12 @@ try:
     sys.path.append(os.path.join(crazyswarm_path, 'ros_ws/src/crazyflie_ros'))
     from pycrazyswarm import Crazyswarm
     from crazyswarm.msg import GenericLogData
-except KeyError:
+except KeyError as e:
     print('CRAZYSWARM_PATH or CRAZYSWARM_YAML not set', file=sys.stderr)
-    # pytest.skip()
-    sys.exit(17)
-except ImportError:
+    raise e
+except ImportError as e:
     print('Failed to import pycrazyswarm', file=sys.stderr)
-    # pytest.skip()
-    sys.exit(18)
+    raise e
 
 logger = logging.getLogger(__name__)
 
@@ -65,33 +63,34 @@ class TestCrazyswarm:
                 assert cf.getParam('commander/enHighLevel') == 1
         swarm.allcfs.setParam('commander/enHighLevel', 1)
 
-    def test_set_cf_param_broadcast(self):
-        log_val = 0
-        def log_callback(value):
-            nonlocal log_val
-            # rospy.loginfo(value)
-            log_val = int(value.values[0])
+    # The support for logs in Crazyswarm is not stable. This test is disabled until we switch to Crzyswarm2
+    # def test_set_cf_param_broadcast(self):
+    #     log_val = 0
+    #     def log_callback(value):
+    #         nonlocal log_val
+    #         # rospy.loginfo(value)
+    #         log_val = int(value.values[0])
 
-        def broadcast_and_validate(value: int) -> bool:
-            # The delay from a broadcast is sent until it shows up in the log topic. Not sure why it takes so long
-            topic_max_wait_time = 50.0
+    #     def broadcast_and_validate(value: int) -> bool:
+    #         # The delay from a broadcast is sent until it shows up in the log topic. Not sure why it takes so long
+    #         topic_max_wait_time = 50.0
 
-            # Broadcast a value
-            swarm.allcfs.setParam('system/testLogParam', value)
+    #         # Broadcast a value
+    #         swarm.allcfs.setParam('system/testLogParam', value)
 
-            # Wait for the value to appear in the log
-            end_time = time.time() + topic_max_wait_time
-            while time.time() < end_time:
-                rospy.sleep(0.3)
-                if log_val == value:
-                    return True
-            return False
+    #         # Wait for the value to appear in the log
+    #         end_time = time.time() + topic_max_wait_time
+    #         while time.time() < end_time:
+    #             rospy.sleep(0.3)
+    #             if log_val == value:
+    #                 return True
+    #         return False
 
-        # Set up logging for one CF. For some reason, the log is not set up on all CFs, I don't understand why.
-        # It seems as Log1 only is set up on the 5 last CFs?
-        # Use one where the log works for now.
-        cf_id_to_get_logs_from = 7
-        rospy.Subscriber('/cf' + str(swarm.allcfs.crazyflies[cf_id_to_get_logs_from].id) + '/log1', GenericLogData, log_callback, queue_size=1)
+    #     # Set up logging for one CF. For some reason, the log is not set up on all CFs, I don't understand why.
+    #     # It seems as Log1 only is set up on the 5 last CFs?
+    #     # Use one where the log works for now.
+    #     cf_id_to_get_logs_from = 7
+    #     rospy.Subscriber('/cf' + str(swarm.allcfs.crazyflies[cf_id_to_get_logs_from].id) + '/log1', GenericLogData, log_callback, queue_size=1)
 
-        assert broadcast_and_validate(47)
-        assert broadcast_and_validate(11)
+    #     assert broadcast_and_validate(47)
+    #     assert broadcast_and_validate(11)
