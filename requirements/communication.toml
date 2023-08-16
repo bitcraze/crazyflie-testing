@@ -17,17 +17,17 @@ limit_high_ms = 8
 description = "Packet rate (packets per seconds) for small radio packets (4 bytes)"
 rational = "Empirical"
 background = """
-This is what a Raspberry Pi 4 running a 64-bit distro manages through Docker.
+This is what our test machine manages through Docker.
 Which can be viewed as our lowest supported system.
 """
 packet_size = 4
-limit_low = 600
+limit_low = 500
 
 [requirement.radio.bwbig]
 description = "Packet rate (packets per seconds) for big radio packet (28 bytes)"
 rational = "Empirical"
 background = """
-This is what a Raspberry Pi 4 running a 64-bit distro manages through Docker.
+This is what our test machine manages through Docker.
 Which can be viewed as our lowest supported system.
 """
 packet_size = 28
