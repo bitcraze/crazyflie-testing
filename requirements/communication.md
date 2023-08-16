@@ -46,8 +46,8 @@ Link round-trip latency for small radio packets (28 bytes)
 Packet rate (packets per seconds) for small radio packets (4 bytes)
 |Field|Value|
 | :--- | :--- |
-|background|This is what a Raspberry Pi 4 running a 64-bit distro manages through Docker. Which can be viewed as our lowest supported system. |
-|limit_low|600|
+|background|This is what our test machine manages through Docker. Which can be viewed as our lowest supported system. |
+|limit_low|500|
 |packet_size|4|
 |rational|Empirical|
 
@@ -57,7 +57,7 @@ Packet rate (packets per seconds) for small radio packets (4 bytes)
 Packet rate (packets per seconds) for big radio packet (28 bytes)
 |Field|Value|
 | :--- | :--- |
-|background|This is what a Raspberry Pi 4 running a 64-bit distro manages through Docker. Which can be viewed as our lowest supported system. |
+|background|This is what our test machine manages through Docker. Which can be viewed as our lowest supported system. |
 |limit_low|350|
 |packet_size|28|
 |rational|Empirical|

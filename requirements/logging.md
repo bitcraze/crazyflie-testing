@@ -60,6 +60,6 @@ heavy task (like kalman) is running.
 
 |Field|Value|
 | :--- | :--- |
-|background|This is what a Raspberry Pi 4 running a 64-bit distro manages through Docker. Which can be viewed as our lowest supported system. |
+|background|This is what our test machine manages through Docker. Which can be viewed as our lowest supported system. |
 |limit_low|300|
 |rational|Empirical|
