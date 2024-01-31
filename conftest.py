@@ -121,7 +121,7 @@ class BCDevice:
     def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None) -> bool:
         try:
             if path.name.endswith(".bin"):
-                targets = [Target('cf2', 'stm32', 'fw')]
+                targets = [Target('cf2', 'stm32', 'fw', [], [])]
             else:
                 targets = []
 
