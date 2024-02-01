@@ -35,11 +35,11 @@ decks = ["bcFlow2", "bcLighthouse4"]
 bootloader_radio = "radio://0/0/2M/B19CF77F05?safelink=0"
 usb_power_control = '1-1.1.2 2'
 
-[device.cf21_ai]
-radio = "radio://0/50/2M/E7E7E71707"
-decks = ["bcAI"]
-bootloader_radio = "radio://0/0/2M/B153611B70?safelink=0"
-usb_power_control = '1-1.1.2 3'
+#[device.cf21_ai]
+#radio = "radio://0/50/2M/E7E7E71707"
+#decks = ["bcAI"]
+#bootloader_radio = "radio://0/0/2M/B153611B70?safelink=0"
+#usb_power_control = '1-1.1.2 3'
 
 [device.cf20_stock]
 radio = "radio://0/50/2M/E7E7E71708"
