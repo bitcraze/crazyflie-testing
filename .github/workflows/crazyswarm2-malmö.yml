@@ -1,0 +1,65 @@
+name: Crazyswarm test 🐝
+
+# Controls when the action will run.
+on:
+  workflow_dispatch:
+  #schedule:
+  #- cron:  '0 4 * * *'
+
+jobs:
+  swarm_at_crazylab:
+    runs-on: self-hosted
+    container:
+      image: ros:humble
+      options: --privileged
+
+    env:
+      CSW_PYTHON: python3
+      CRAZYSWARM_PATH: crazyswarm
+      CRAZYSWARM_YAML: crazylab-cs2-malmö.yaml
+
+    steps:
+      - name: Install Crazyswarm2 dependencies
+        run: |
+          apt update
+          apt install -y libboost-program-options-dev libusb-1.0-0-dev
+          pip3 install rowan
+          pip3 install cflib transforms3d
+          apt install ros-humble-tf-transformations ros-humble-motion-capture-tracking
+
+      - name: Check out sources
+        uses: actions/checkout@v3
+
+      - name: Download latest firmware files
+        with:
+          repo: bitcraze/crazyflie-release
+          workflow: nightly.yml
+        uses: dawidd6/action-download-artifact@v2
+
+      - name: Checkout Crazyswarm2
+        uses: actions/checkout@v3
+        with:
+          repository: imrclab/crazyswarm2
+          path: ros2_ws/src/crazyswarm2/
+
+      - name: Build Crazyswarm2
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd ros2_ws
+          colcon build --symlink-install
+        shell: bash
+
+      - name: Install Crazyflie python library
+        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+
+      - name: Upgrade swarm to latest firmware
+        run: |
+          source ros2_ws/install/setup.bash
+          python3 management/program_swarm.py nightly/firmware-tag-nightly.zip --sim
+        shell: bash
+
+      - name: Run Crazyswarm tests
+        run: |
+          source ros2_ws/install/setup.bash
+          ros2 launch swarms/crazylab-cs2-malmö-launch.py 
+        shell: bash
