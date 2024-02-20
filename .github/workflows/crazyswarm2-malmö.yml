@@ -28,9 +28,7 @@ jobs:
           python3-toml python3-pip
           pip3 install rowan
           pip3 install cflib transforms3d
-          apt install ros-humble-tf-transformations ros-humble-motion-capture-tracking
-
-
+          apt install ros-humble-tf-transformations 
 
       - name: Check out sources
         uses: actions/checkout@v3
@@ -46,6 +44,15 @@ jobs:
         with:
           repository: imrclab/crazyswarm2
           path: ros2_ws/src/crazyswarm2/
+          submodules: 'recursive'
+
+      - name: Checkout motion_capture_tracking
+        uses: actions/checkout@v3
+        with:
+          repository: imrclab/motion_capture_tracking
+          path: ros2_ws/src/motion_capture_tracking
+          ref: ros2
+          submodules: 'recursive'
 
       - name: Build Crazyswarm2
         run: |
