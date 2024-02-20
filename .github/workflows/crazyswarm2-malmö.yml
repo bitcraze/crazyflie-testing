@@ -22,14 +22,14 @@ jobs:
       - name: Install Crazyswarm2 dependencies
         run: |
           apt update
-          apt install -y libboost-program-options-dev libusb-1.0-0-dev
+          apt install -y git swig libpython3-dev python3-numpy \
+          python3-yaml python3-matplotlib python3-pytest python3-scipy \
+          libpcl-dev libboost-program-options-dev libusb-1.0-0-dev sdcc gcc-arm-none-eabi \
+          python3-toml python3-pip
           pip3 install rowan
           pip3 install cflib transforms3d
           apt install ros-humble-tf-transformations ros-humble-motion-capture-tracking
-          apt install -y git swig libpython3-dev python3-numpy \
-          python3-yaml python3-matplotlib python3-pytest python3-scipy \
-          libpcl-dev libusb-1.0-0-dev sdcc gcc-arm-none-eabi \
-          python3-toml python3-pip
+
 
 
       - name: Check out sources
