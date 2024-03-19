@@ -17,8 +17,19 @@ import logging
 import time
 import random
 from threading import Event
+from functools import wraps
 
 from conftest import ValidatedSyncCrazyflie
+
+def reboot_wrapper(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except:
+            kwargs['test_setup'].device.reboot()
+            raise
+    return wrapper
 
 logger = logging.getLogger(__name__)
 
