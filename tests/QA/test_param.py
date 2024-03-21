@@ -17,8 +17,10 @@ import logging
 import time
 import random
 from threading import Event
+from utils.wrappers import reboot_wrapper
 
 from conftest import ValidatedSyncCrazyflie
+
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +202,7 @@ class TestParameters:
                 scf.cf.param.persistent_get_state(param, state_cb)
 
 
+    @reboot_wrapper
     def test_param_persistent_eeprom_stress(self, test_setup: conftest.DeviceFixture):
         """ Stress test the eeprom by setting and clearing persistent parameters. This will create holes in the eeprom
             memory which needs to be de-fragmented once it hits this limit, which should be between 250-300 persistent
