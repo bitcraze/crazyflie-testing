@@ -35,22 +35,22 @@ jobs:
           cd ros2_ws/src
           git clone https://github.com/IMRCLab/crazyswarm2.git --recursive
           cd crazyswarm2
-          git fetch origin
-          git merge origin/default_yaml_folder2
-          git merge origin/swarm_flash_utility
           git clone --branch ros2 --recursive https://github.com/IMRCLab/motion_capture_tracking.git
 
       - name: Build Crazyswarm2
         run: |
           source /opt/ros/humble/setup.bash
+          cd ros2_ws
           colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
         shell: bash
 
-      - name: flash firmware
+      - name: Flash firmware
         run: |
           source /opt/ros/humble/setup.bash
-          source ros2_ws/install/setup.bash
-          curl "https://github.com/bitcraze/crazyflie-release/actions/runs/8609215930/artifacts/1396247476"
+          cd ros2_ws
+          source install/setup.bash
+          curl "https://github.com/bitcraze/crazyflie-release/actions/runs/8640413184/artifacts/1403572448"
+          ls
           mv nightly.zip firmware-cf2-nightly.zip
           ./cfmult.py --file_name nightly.zip flash yaml -C ros2_ws/src/crazyswarm2/crazyflie/config/
         shell: bash
