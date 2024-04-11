@@ -32,7 +32,6 @@ jobs:
           mkdir -p ros2_ws/src
           cd ros2_ws/src
           git clone https://github.com/IMRCLab/crazyswarm2.git --recursive
-          cd crazyswarm2
           git clone --branch ros2 --recursive https://github.com/IMRCLab/motion_capture_tracking.git
 
       - name: Build Crazyswarm2
