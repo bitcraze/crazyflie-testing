@@ -37,6 +37,11 @@ jobs:
           git clone https://github.com/IMRCLab/crazyswarm2.git --recursive
           git clone --branch ros2 --recursive https://github.com/IMRCLab/motion_capture_tracking.git
 
+      - name: check folder Crazyswarm2
+        run: |  
+          cd ros2_ws/src/
+          ls
+      
       - name: Build Crazyswarm2
         run: |
           source /opt/ros/humble/setup.bash
