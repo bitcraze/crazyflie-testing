@@ -20,7 +20,7 @@ jobs:
 
       #- name: Install Crazyswarm dependencies
       #  run: |
-      #    apt-get update
+      #    D
       #    DEBIAN_FRONTEND=noninteractive apt install -y git swig libpython3-dev python3-numpy \
       #    python3-yaml python3-matplotlib python3-pytest python3-scipy \
       #    libpcl-dev libusb-1.0-0-dev sdcc gcc-arm-none-eabi \
@@ -28,7 +28,8 @@ jobs:
       #    pip3 install rowan cflib transforms3d
 
       - name: Install Crazyswarm2
-        run: |  
+        run: |
+          apt-get update
           apt install -y git
           mkdir -p ros2_ws/src
           cd ros2_ws/src
