@@ -1,0 +1,77 @@
+name: Crazyswarm test 🐝
+
+# Controls when the action will run.
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  cs2_at_crazylab:
+    runs-on: self-hosted
+    container:
+      image: ros:humble
+      options: --privileged
+
+    env:
+      CSW_PYTHON: python3
+      CRAZYSWARM_PATH: crazyswarm
+      CRAZYSWARM_YAML: crazylab-malmö.yaml
+
+    steps:
+
+      - name: Install Crazyswarm dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt install -y git swig libpython3-dev python3-numpy \
+          python3-yaml python3-matplotlib python3-pytest python3-scipy \
+          libpcl-dev libusb-1.0-0-dev sdcc gcc-arm-none-eabi \
+          curl python3-toml python3-pip
+          pip3 install rowan cflib transforms3d
+
+      - name: Install Crazyswarm2
+        run: |  
+          mkdir -p ros2_ws/src
+          cd ros2_ws/src
+          git clone https://github.com/IMRCLab/crazyswarm2.git --recursive
+          cd crazyswarm2
+          git clone --branch ros2 --recursive https://github.com/IMRCLab/motion_capture_tracking.git
+
+      - name: Build Crazyswarm2
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd ros2_ws
+          colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+        shell: bash
+
+      - name: Install Crazyflie python library
+        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+
+      - name: Download latest firmware files
+        with:
+          repo: bitcraze/crazyflie-release
+          workflow: nightly.yml
+        uses: dawidd6/action-download-artifact@v2
+
+      - name: Flash firmware
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ros2_ws/install/setup.bash
+          ./cfmult.py --file_name nightly/firmware-cf2-nightly.zip flash yaml -C swarms/cs2-test-yamls/
+        shell: bash
+
+
+      #- name: Run Crazyswarm2 Server
+      #  run: |
+      #    source /opt/ros/humble/setup.bash
+      #    source ros2_ws/install/setup.bash
+      #    ros2 launch crazyflie launch.py & ros2 run crazyflie_examples set_param.py
+      #  shell: bash
+
+
+
+
+        
+
+      
+
