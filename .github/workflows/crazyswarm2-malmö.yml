@@ -1,10 +1,10 @@
-name: Crazyswarm test 🐝
+name: Crazyswarm2 test 🐝
 
 # Controls when the action will run.
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+  schedule:
+  - cron:  '0 5 * * *'
 
 jobs:
   cs2_at_crazylab:
