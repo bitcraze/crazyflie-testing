@@ -25,7 +25,7 @@ jobs:
           python3-yaml python3-matplotlib python3-pytest python3-scipy \
           libpcl-dev libusb-1.0-0-dev sdcc gcc-arm-none-eabi \
           curl python3-toml python3-pip
-          pip3 install rowan cflib transforms3d ruamel
+          pip3 install rowan cflib transforms3d ruamel.yaml
 
       - name: Install Crazyswarm2
         run: |
