@@ -18,6 +18,12 @@ jobs:
 
     steps:
 
+      - name: check dir firmware
+        run: |
+          cd swarms/
+          ls
+        shell: bash
+
       - name: Install Crazyswarm dependencies
         run: |
           apt-get update
@@ -59,13 +65,6 @@ jobs:
           repo: bitcraze/crazyflie-release
           workflow: nightly.yml
         uses: dawidd6/action-download-artifact@v2
-
-      - name: Flash firmware
-        run: |
-          cd swarms/cs2-test-yamls 
-          ls
-        shell: bash
-
 
       - name: Flash firmware
         run: |
