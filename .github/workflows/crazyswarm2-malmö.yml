@@ -55,7 +55,7 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash
-          ./cfmult.py --file_name nightly/firmware-cf2-nightly.zip flash yaml -C swarms/cs2-test-yamls/
+          ros2 run crazyflie cfmult.py --file_name nightly/firmware-cf2-nightly.zip flash yaml -C swarms/cs2-test-yamls/
         shell: bash
 
 
