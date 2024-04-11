@@ -35,7 +35,7 @@ jobs:
           rm -rf crazyswarm2 motion_capture_tracking
           ls
           git clone https://github.com/IMRCLab/crazyswarm2.git --recursive
-          git clone --branch ros2 --recursive https://github.com/IMRCLab/motion_capture_tracking.git
+          apt install -y ros-humble-motion-capture-tracking
 
       - name: check folder Crazyswarm2
         run: |  
