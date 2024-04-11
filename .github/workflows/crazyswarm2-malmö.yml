@@ -44,16 +44,33 @@ jobs:
           colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
         shell: bash
 
+      - name: Install Crazyflie python library
+        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+
+      - name: Download latest firmware files
+        with:
+          repo: bitcraze/crazyflie-release
+          workflow: nightly.yml
+        uses: dawidd6/action-download-artifact@v2
+
       - name: Flash firmware
         run: |
           source /opt/ros/humble/setup.bash
-          cd ros2_ws
-          source install/setup.bash
-          curl "https://github.com/bitcraze/crazyflie-release/actions/runs/8640413184/artifacts/1403572448"
-          ls
-          mv nightly.zip firmware-cf2-nightly.zip
-          ./cfmult.py --file_name nightly.zip flash yaml -C ros2_ws/src/crazyswarm2/crazyflie/config/
+          source ros2_ws/install/setup.bash
+          ./cfmult.py --file_name nightly/firmware-cf2-nightly.zip flash yaml -C swarms/cs2-test-yamls/
         shell: bash
+
+
+      #- name: Run Crazyswarm2 Server
+      #  run: |
+      #    source /opt/ros/humble/setup.bash
+      #    source ros2_ws/install/setup.bash
+      #    ros2 launch crazyflie launch.py & ros2 run crazyflie_examples set_param.py
+      #  shell: bash
+
+
+
+
         
 
       
