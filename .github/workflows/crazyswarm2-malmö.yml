@@ -48,6 +48,7 @@ jobs:
           source /opt/ros/humble/setup.bash
           ls
           cd ros2_ws
+          rm -rf install/ log/ build/
           ls
           colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
         shell: bash
