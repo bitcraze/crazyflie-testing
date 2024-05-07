@@ -63,12 +63,12 @@ jobs:
       #  shell: bash
 
 
-      #- name: Run Crazyswarm2 Server
-      #  run: |
-      #    source /opt/ros/humble/setup.bash
-      #    source ros2_ws/install/setup.bash
-      #    ros2 launch crazyflie launch.py & ros2 run crazyflie_examples set_param.py
-      #  shell: bash
+      - name: Run Crazyswarm2 Server
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ros2_ws/install/setup.bash
+          ros2 launch crazyflie launch.py & ros2 run crazyflie_examples set_param.py
+        shell: bash
 
 
 
