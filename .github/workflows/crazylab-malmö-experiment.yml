@@ -32,7 +32,7 @@ jobs:
         run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
 
       - name: Check out sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install requirements
         run: pip3 install -r requirements.txt
@@ -41,7 +41,7 @@ jobs:
         with:
           repo: bitcraze/crazyflie-release
           workflow: nightly-experiment.yml
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v3
 
       - name: Reset power to all devices
         run: python3 management/usb-power-reset.py -a reset
