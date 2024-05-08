@@ -25,6 +25,8 @@ jobs:
           libpcl-dev libusb-1.0-0-dev sdcc gcc-arm-none-eabi \
           curl python3-toml python3-pip
           pip3 install rowan cflib transforms3d ruamel.yaml
+          DEBIAN_FRONTEND=noninteractive apt install -y install ros-humble-motion-capture-tracking \
+          ros-humble-joy 
 
       - name: Install Crazyswarm2
         run: |
