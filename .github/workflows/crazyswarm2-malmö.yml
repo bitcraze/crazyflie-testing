@@ -69,7 +69,7 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           source ros2_ws/install/setup.bash
-          ros2 launch crazyflie launch.py gui:=False rviz:=False server_yaml_file:='swarm/cs2-test-yamls/cs2_server.yaml' & ros2 run crazyflie_examples set_param.py
+          ros2 launch swarm/cs2-test-yamls/launch.py server_yaml_file:='swarm/cs2-test-yamls/cs2_server.yaml' & ros2 run crazyflie_examples set_param.py
         shell: bash
 
 
