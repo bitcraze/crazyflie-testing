@@ -17,6 +17,9 @@ jobs:
       CRAZYSWARM_YAML: crazylab-malmö.yaml
 
     steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+        
       - name: Install Crazyswarm dependencies
         run: |
           apt-get update
