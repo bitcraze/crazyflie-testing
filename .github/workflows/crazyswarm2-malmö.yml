@@ -63,8 +63,10 @@ jobs:
       - name: Run Crazyswarm2 Server
         run: |
           source /opt/ros/humble/setup.bash
+          ls
           source ros2_ws/install/setup.bash
-          cd swarms/cs2-test-yamls/ && ros2 launch launch.py server_yaml_file:='cs2_server.yaml' & ros2 run crazyflie_examples set_param.py
+          ros2 launch launch.py server_yaml_file:='swarms/cs2-test-yamls/cs2_server.yaml' &
+          ros2 run crazyflie_examples set_param.py
         shell: bash
 
 
