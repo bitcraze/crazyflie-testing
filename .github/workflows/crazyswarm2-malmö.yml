@@ -60,20 +60,20 @@ jobs:
           workflow: nightly.yml
         uses: dawidd6/action-download-artifact@v2
 
-      #- name: Flash firmware
-      #  run: |
-      #    source /opt/ros/humble/setup.bash
-      #    source ros2_ws/install/setup.bash
-      #    ros2 run crazyflie cfmult.py --file_name nightly/firmware-cf2-nightly.zip flash yaml -C swarms/cs2-test-yamls/
-      #  shell: bash
+      - name: Flash firmware
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ros2_ws/install/setup.bash
+          ros2 run crazyflie cfmult.py --file_name nightly/firmware-cf2-nightly.zip flash yaml -C swarms/cs2-test-yamls/
+        shell: bash
 
 
-      #- name: Run Crazyswarm2 Server
-      #  run: |
-      #    source /opt/ros/humble/setup.bash
-      #    source ros2_ws/install/setup.bash
-      #    cd swarm/cs2-test-yamls/ && ros2 launch launch.py server_yaml_file:='cs2_server.yaml' & ros2 run crazyflie_examples set_param.py
-      #  shell: bash
+      - name: Run Crazyswarm2 Server
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ros2_ws/install/setup.bash
+          cd swarm/cs2-test-yamls/ && ros2 launch launch.py server_yaml_file:='cs2_server.yaml' & ros2 run crazyflie_examples set_param.py
+        shell: bash
 
 
 
