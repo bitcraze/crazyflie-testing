@@ -82,8 +82,7 @@ def generate_launch_description():
             executable='crazyflie_server',
             name='crazyflie_server',
             output='screen',
-            parameters= [PythonExpression(["'tmp_server.yaml' if '", LaunchConfiguration('server_yaml_file'), "' == '' else '", LaunchConfiguration('server_yaml_file'), "'"])],
-            prefix=PythonExpression(['"xterm -e gdb -ex run --args" if ', LaunchConfiguration('debug'), ' else ""']),
+            parameters= ['swarms/cs2-test-yamls/cs2_server.yaml']
         ),
         example_node,
         RegisterEventHandler(
