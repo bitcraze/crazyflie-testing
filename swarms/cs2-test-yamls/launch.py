@@ -7,6 +7,7 @@ from launch_ros.actions import Node
 from launch.conditions import LaunchConfigurationEquals
 from launch.conditions import LaunchConfigurationNotEquals
 from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.actions import TimerAction, Shutdown
 
 
 def generate_launch_description():
@@ -41,6 +42,11 @@ def generate_launch_description():
             emulate_tty=True,
             parameters= [PythonExpression(["'tmp_server.yaml' if '", LaunchConfiguration('server_yaml_file'), "' == '' else '", LaunchConfiguration('server_yaml_file'), "'"])],
         ),
-
-
+        # Shutdown after 10 seconds
+        TimerAction(
+            period=10.0,
+            actions=[
+                Shutdown()
+            ]
+        ),
     ])
