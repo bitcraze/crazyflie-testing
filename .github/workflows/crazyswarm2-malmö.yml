@@ -29,6 +29,7 @@ jobs:
           pip3 install rowan cflib transforms3d ruamel.yaml
           DEBIAN_FRONTEND=noninteractive apt install -y ros-humble-motion-capture-tracking \
           ros-humble-joy 
+          DEBIAN_FRONTEND=noninteractive apt install -y uhubctl
 
       - name: Clone Crazyswarm2 sources
         run: |
