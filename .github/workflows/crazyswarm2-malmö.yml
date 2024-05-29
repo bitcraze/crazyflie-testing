@@ -44,6 +44,9 @@ jobs:
           colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
         shell: bash
 
+      - name: Reset power to all devices
+        run: python3 management/usb-power-reset.py -a reset
+
       - name: Run Crazyswarm2 Server
         run: |
           source /opt/ros/humble/setup.bash
