@@ -9,7 +9,7 @@ on:
 jobs:
   cs2_at_crazylab:
     runs-on: self-hosted
-    timeout-minutes: 120
+    timeout-minutes: 10
     container:
       image: ros:humble
       options: --privileged
