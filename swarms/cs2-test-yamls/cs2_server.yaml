@@ -115,7 +115,7 @@
         type: cf21
       cf8:
         enabled: true
-        uri: radio://0/50/2M/E7E7E71704
+        uri: radio://0/50/2M/E7E7E71708
         initial_position:
         - 0.0
         - 0.0
