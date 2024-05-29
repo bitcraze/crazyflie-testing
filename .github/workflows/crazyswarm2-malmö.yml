@@ -13,7 +13,8 @@ jobs:
     container:
       image: ros:humble
       options: --privileged
-
+    env:
+      CRAZY_SITE: crazylab-malmö
     steps:
       - name: Check out github source
         uses: actions/checkout@v4
