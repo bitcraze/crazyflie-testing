@@ -14,55 +14,6 @@ from launch.events import Shutdown
 from launch.actions import (DeclareLaunchArgument, EmitEvent,
                             LogInfo, RegisterEventHandler)
 
-def generate_launch_description():
-    script = LaunchConfiguration('script')
-    backend = LaunchConfiguration('backend')
-
-    script_launch_arg = DeclareLaunchArgument(
-        'script'
-    )
-
-    backend_launch_arg = DeclareLaunchArgument(
-        'backend',
-        default_value='cpp'
-    )
-
-    crazyflie = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('crazyflie'), 'launch'),
-            '/launch.py']),
-        launch_arguments={
-            'backend': backend,
-            }.items()
-    )
-
-    example_node = Node(
-        package='crazyflie_examples',
-        executable=script,
-        name=script,
-        parameters=[{
-            'use_sim_time': PythonExpression(["'", backend, "' == 'sim'"]),
-        }]
-    )
-
-    event_close =    RegisterEventHandler(
-            OnProcessExit(
-                target_action=example_node,
-                on_exit=[
-                    LogInfo(msg=('Param example has ended')),
-                    EmitEvent(event=Shutdown(
-                        reason='example ended'))
-                ]
-            )
-        )
-
-    return LaunchDescription([
-        script_launch_arg,
-        backend_launch_arg,
-        crazyflie,
-        example_node,
-        event_close
-    ])
 
 def generate_launch_description():
 
@@ -74,8 +25,6 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        DeclareLaunchArgument('backend', default_value='cpp'),
-        DeclareLaunchArgument('debug', default_value='False'),
         DeclareLaunchArgument('server_yaml_file', default_value=''),
         Node(
             package='crazyflie',
