@@ -3,20 +3,22 @@ name: Crazyswarm2 test 🐝
 # Controls when the action will run.
 on:
   workflow_dispatch:
+  schedule:
+  - cron:  '0 4 * * *'
 
 jobs:
   cs2_at_crazylab:
     runs-on: self-hosted
+    timeout-minutes: 10
     container:
       image: ros:humble
       options: --privileged
-
     env:
-      CSW_PYTHON: python3
-      CRAZYSWARM_PATH: crazyswarm
-      CRAZYSWARM_YAML: crazylab-malmö.yaml
-
+      CRAZY_SITE: crazylab-malmö
     steps:
+      - name: Check out github source
+        uses: actions/checkout@v4
+        
       - name: Install Crazyswarm dependencies
         run: |
           apt-get update
@@ -25,19 +27,17 @@ jobs:
           libpcl-dev libusb-1.0-0-dev sdcc gcc-arm-none-eabi \
           curl python3-toml python3-pip
           pip3 install rowan cflib transforms3d ruamel.yaml
+          DEBIAN_FRONTEND=noninteractive apt install -y ros-humble-motion-capture-tracking \
+          ros-humble-joy 
+          DEBIAN_FRONTEND=noninteractive apt install -y uhubctl
 
-      - name: Install Crazyswarm2
+      - name: Clone Crazyswarm2 sources
         run: |
           mkdir -p ros2_ws/src
           cd ros2_ws/src
           rm -rf crazyswarm2 motion_capture_tracking
           git clone https://github.com/IMRCLab/crazyswarm2.git --recursive
-          git clone --branch ros2 --recursive https://github.com/IMRCLab/motion_capture_tracking.git
 
-      - name: check folder Crazyswarm2
-        run: |  
-          cd ros2_ws/src/
-      
       - name: Build Crazyswarm2
         run: |
           source /opt/ros/humble/setup.bash
@@ -46,34 +46,13 @@ jobs:
           colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
         shell: bash
 
-      - name: Install Crazyflie python library
-        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+      - name: Reset power to all devices
+        run: python3 management/usb-power-reset.py -a reset
 
-      - name: Download latest firmware files
-        with:
-          repo: bitcraze/crazyflie-release
-          workflow: nightly.yml
-        uses: dawidd6/action-download-artifact@v2
-
-      #- name: Flash firmware
-      #  run: |
-      #    source /opt/ros/humble/setup.bash
-      #    source ros2_ws/install/setup.bash
-      #    ros2 run crazyflie cfmult.py --file_name nightly/firmware-cf2-nightly.zip flash yaml -C swarms/cs2-test-yamls/
-      #  shell: bash
-
-
-      #- name: Run Crazyswarm2 Server
-      #  run: |
-      #    source /opt/ros/humble/setup.bash
-      #    source ros2_ws/install/setup.bash
-      #    ros2 launch crazyflie launch.py & ros2 run crazyflie_examples set_param.py
-      #  shell: bash
-
-
-
-
-        
-
-      
-
+      - name: Run Crazyswarm2 Server
+        run: |
+          source /opt/ros/humble/setup.bash
+          ls
+          source ros2_ws/install/setup.bash
+          ros2 launch swarms/cs2-test-yamls/launch.py server_yaml_file:='swarms/cs2-test-yamls/cs2_server.yaml'
+        shell: bash
