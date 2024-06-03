@@ -8,13 +8,14 @@ on:
 
 jobs:
   testsuite_at_crazylab:
+    env:
+      CRAZY_SITE: crazylab-malmö
+      TEST_FILE: TestRun-${{github.run_number}}.xml
     runs-on: self-hosted
     timeout-minutes: 120
     container:
       image: python:3.9.7-buster
       options: --privileged
-    env:
-      CRAZY_SITE: crazylab-malmö
     steps:
       - name: Install libusb
         run: |
@@ -50,4 +51,18 @@ jobs:
         run: python3 management/program.py --file nightly-experiment/firmware-cf2-nightly-experiment.zip
 
       - name: Run test suite
-        run: pytest --verbose --junit-xml $CRAZY_SITE-$(date +%s).xml tests/QA
+        run: pytest --verbose --junit-xml ${{env.TEST_FILE}} tests/QA/test_param.py
+
+      - name: Upload test file
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_report
+          path: ${{env.TEST_FILE}}
+
+      - name: Pretty print test results
+        if: always()
+        uses: pmeier/pytest-results-action@main
+        with:
+          path: ${{env.TEST_FILE}}
+          summary: true
+          title: Test results
