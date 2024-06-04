@@ -15,6 +15,7 @@ jobs:
       options: --privileged
     env:
       CRAZY_SITE: crazylab-malmö
+      TEST_FILE: TestRun-${{github.run_number}}.xml
     steps:
       - name: Install libusb
         run: |
@@ -50,7 +51,7 @@ jobs:
         run: python3 management/program.py --file nightly/firmware-cf2-nightly.zip
 
       - name: Run test suite
-        run: pytest --verbose --junit-xml $CRAZY_SITE-$(date +%s).xml tests/QA
+        run: pytest --verbose --junit-xml ${{env.TEST_FILE}} tests/QA
 
       - name: Checkout Crazyflie python library
         uses: actions/checkout@v4
@@ -64,3 +65,18 @@ jobs:
       - name: Run Crazyflie python library examples
         run: |
           python3 -u utils/run_examples.py --path crazyflie-lib-python
+
+      - name: Upload test file
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_report
+          path: ${{env.TEST_FILE}}
+  
+      - name: Pretty print test results
+        if: always()
+        uses: pmeier/pytest-results-action@main
+        with:
+          path: ${{env.TEST_FILE}}
+          summary: true
+          title: Test results
+
