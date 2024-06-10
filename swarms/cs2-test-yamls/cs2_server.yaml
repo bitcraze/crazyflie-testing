@@ -97,38 +97,38 @@
         - 0.0
         - 0.0
         type: cf21
-#      cf6:
-#        enabled: true
-#        uri: radio://0/50/2M/E7E7E71706
-#        initial_position:
-#        - 0.0
-#        - 0.0
-#        - 0.0
-#        type: cf21
-#      cf7:
-#        enabled: true
-#        uri: radio://0/50/2M/E7E7E71707
-#        initial_position:
-#        - 0.0
-#        - 0.0
-#        - 0.0
-#        type: cf21
-#      cf8:
-#        enabled: true
-#        uri: radio://0/50/2M/E7E7E71708
-#        initial_position:
-#        - 0.0
-#        - 0.0
-#        - 0.0
-#        type: cf21
-#      cf9:
-#        enabled: true
-#        uri: radio://0/50/2M/E7E7E71709
-#        initial_position:
-#        - 0.0
-#        - 0.0
-#        - 0.0
-#        type: cf21
+      cf6:
+        enabled: true
+        uri: radio://0/50/2M/E7E7E71706
+        initial_position:
+        - 0.0
+        - 0.0
+        - 0.0
+        type: cf21
+      cf7:
+        enabled: true
+        uri: radio://0/50/2M/E7E7E71707
+        initial_position:
+        - 0.0
+        - 0.0
+        - 0.0
+        type: cf21
+      cf8:
+        enabled: true
+        uri: radio://0/50/2M/E7E7E71708
+        initial_position:
+        - 0.0
+        - 0.0
+        - 0.0
+        type: cf21
+      cf9:
+        enabled: true
+        uri: radio://0/50/2M/E7E7E71709
+        initial_position:
+        - 0.0
+        - 0.0
+        - 0.0
+        type: cf21
     robot_types:
       cf21:
         motion_capture:
