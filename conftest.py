@@ -263,19 +263,21 @@ def get_devices() -> List[BCDevice]:
     devices = list()
 
     site = os.getenv('CRAZY_SITE')
+    devicenames = os.getenv('CRAZY_DEVICE')
     if site is None:
         raise Exception('No CRAZY_SITE env specified!')
-
+    if devicenames is not None:
+        devicenames = devicenames.split(',')
     path = ""
     try:
         path = os.path.join(SITE_PATH, '%s.toml' % site)
         site_t = toml.load(open(path, 'r'))
 
         for name, device in site_t['device'].items():
-            devices.append(BCDevice(name, device))
+            if(not devicenames or name in devicenames):
+                devices.append(BCDevice(name, device))
     except Exception:
         raise Exception('Failed to parse toml %s!' % path)
-
     return devices
 
 

@@ -5,12 +5,12 @@ on:
   workflow_dispatch:
     inputs:
       category:
-        description: 'Select the test category to run. NOTE: the cateory is an actual filepath to a test file, starting with tests/.../test_*.py'
+        description: 'Test category.' #Format: tests/.../test_*.py'
       filter:
         description: 'Select a filter to filter the tests on' #NOTE to filter on more than one test, use the following syntax: -k "filter1 or filter2"
         default: ''
-      #deck:
-       # description: 'Select a deck to run the tests on'
+      devices:
+        description: 'Devices to run the tests on.' #Format: <device1>,<device2>,...'
 
 #  schedule:
 #  - cron:  '0 6 * * *'
@@ -20,6 +20,7 @@ jobs:
     env:
       CRAZY_SITE: crazylab-malmö
       TEST_FILE: TestRun-${{github.run_number}}.xml
+      CRAZY_DEVICE: ${{github.event.inputs.devices}}
     runs-on: self-hosted
     timeout-minutes: 120
     container:
