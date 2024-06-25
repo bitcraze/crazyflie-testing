@@ -5,11 +5,13 @@ on:
   workflow_dispatch:
     inputs:
       category:
+        type: string
         description: 'Test category.' #Format: tests/.../test_*.py'
       filter:
+        type: string
         description: 'Select a filter to filter the tests on' #NOTE to filter on more than one test, use the following syntax: -k "filter1 or filter2"
-        default: ''
       devices:
+        type: string
         description: 'Devices to run the tests on.' #Format: <device1>,<device2>,...'
 
 #  schedule:
@@ -59,11 +61,17 @@ jobs:
 
       - name: Upgrade devices to latest firmware
         run: python3 management/program.py --file nightly-experiment/firmware-cf2-nightly-experiment.zip
-
       - name: Run test suite
-        
-        run: pytest --verbose --junit-xml ${{env.TEST_FILE}} ${{github.event.inputs.category}} -k ${{github.event.inputs.filter}}
-
+        env:
+          FILTER: ${{ github.event.inputs.filter || '""'}}
+        run: |
+          FILTER_INPUT="${{ github.event.inputs.filter }}"
+          FILTER_OPTION=$(echo "$FILTER_INPUT" | xargs)  # Trim spaces and check for non-empty content
+          if [ -n "$FILTER_OPTION" ]; then
+            pytest --verbose --junit-xml ${{env.TEST_FILE}} ${{github.event.inputs.category}} -k ${{ github.event.inputs.filter }}
+          else
+            pytest --verbose --junit-xml ${{env.TEST_FILE}} ${{github.event.inputs.category}} 
+          fi
       - name: Upload test file
         uses: actions/upload-artifact@v4
         with:

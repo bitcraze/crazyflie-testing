@@ -266,7 +266,7 @@ def get_devices() -> List[BCDevice]:
     devicenames = os.getenv('CRAZY_DEVICE')
     if site is None:
         raise Exception('No CRAZY_SITE env specified!')
-    if devicenames is not None:
+    if devicenames is not None and devicenames != '':
         devicenames = devicenames.split(',')
     path = ""
     try:
