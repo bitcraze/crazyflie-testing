@@ -54,10 +54,11 @@ class BCDevice:
             pass
 
         self.decks = []
-
+        self.properties = []
         if 'decks' in device:
             self.decks = device['decks']
-
+        if 'properties' in device:
+            self.properties = device['properties']
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -258,8 +259,7 @@ def get_bl_address(dev: BCDevice) -> str:
     link.close()
     return address
 
-
-def get_devices() -> List[BCDevice]:
+def get_devices(has_decks: List[str]=[], has_properties: List[str]=[]) -> List[BCDevice]:
     devices = list()
 
     site = os.getenv('CRAZY_SITE')
@@ -275,9 +275,15 @@ def get_devices() -> List[BCDevice]:
 
         for name, device in site_t['device'].items():
             if(not devicenames or name in devicenames):
-                devices.append(BCDevice(name, device))
+                dev = BCDevice(name, device)
+                if all(deck in dev.decks for deck in has_decks):
+                    if all(prop in dev.properties for prop in has_properties):
+                        devices.append(dev)
+                        print(f'Adding {name}, {dev.decks}')
     except Exception:
         raise Exception('Failed to parse toml %s!' % path)
+    if not devices:
+        raise Exception('No devices found in %s with decks and properties!', path, has_decks, has_properties)
     return devices
 
 
