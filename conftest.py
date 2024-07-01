@@ -29,6 +29,18 @@ REQUIREMENT = os.path.join(DIR, 'requirements/')
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 
 
+def pytest_generate_tests(metafunc):
+    has_decks = metafunc.definition.get_closest_marker('decks')
+    has_properties = metafunc.definition.get_closest_marker('requirements')
+    has_decks = has_decks.args if has_decks else []
+    has_properties = has_properties.args if has_properties else []
+    
+    devices = get_devices(has_decks,has_properties)
+    if 'test_setup' in metafunc.fixturenames:
+        metafunc.parametrize('test_setup', devices, indirect=True, ids=lambda d: d.name)
+    else:
+        metafunc.parametrize('dev', devices, ids=lambda d: d.name)
+
 class USB_Power_Control_Action(str, Enum):
     ON     = 'on'
     OFF    = 'off'
@@ -279,11 +291,8 @@ def get_devices(has_decks: List[str]=[], has_properties: List[str]=[]) -> List[B
                 if all(deck in dev.decks for deck in has_decks):
                     if all(prop in dev.properties for prop in has_properties):
                         devices.append(dev)
-                        print(f'Adding {name}, {dev.decks}')
     except Exception:
-        raise Exception('Failed to parse toml %s!' % path)
-    if not devices:
-        raise Exception('No devices found in %s with decks and properties!', path, has_decks, has_properties)
+        raise Exception(f'Failed to parse toml {path}!')
     return devices
 
 
