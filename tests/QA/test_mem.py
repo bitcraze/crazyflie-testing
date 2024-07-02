@@ -17,13 +17,6 @@ import conftest
 from cflib.crazyflie.mem import MemoryElement
 
 
-@pytest.mark.parametrize(
-    'test_setup',
-    conftest.get_devices(),
-    indirect=['test_setup'],
-    ids=lambda d: d.name
-)
-
 class TestMem:
     def test_mem_ow(self, test_setup: conftest.DeviceFixture):
         '''
