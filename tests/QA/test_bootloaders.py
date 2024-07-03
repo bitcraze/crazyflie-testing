@@ -16,7 +16,7 @@ import conftest
 import time
 
 
-@pytest.mark.parametrize('dev', conftest.get_devices(), ids=lambda d: d.name)
+
 class TestBootloaders:
 
     @staticmethod

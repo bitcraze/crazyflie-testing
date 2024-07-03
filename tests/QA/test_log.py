@@ -21,20 +21,6 @@ from cflib.crazyflie.log import LogConfig
 from conftest import ValidatedSyncCrazyflie
 from cflib.crazyflie.syncLogger import SyncLogger
 
-
-#
-# Using the indirect=True parameter when parametrizing a test allows to
-# parametrize a test with a fixture receiving the values before passing them to
-# a test. In this case it means a device in the array returned from
-# get_devices() will be passed to test_setup() in conftest.py before being used
-# as a parameter in the test methods.
-#
-@pytest.mark.parametrize(
-    'test_setup',
-    conftest.get_devices(),
-    indirect=True,
-    ids=lambda d: d.name
-)
 class TestLogVariables:
 
     def test_log_async(self, test_setup: conftest.DeviceFixture):

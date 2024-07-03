@@ -27,7 +27,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize('dev', conftest.get_devices(), ids=lambda d: d.name)
 class TestRadio:
     def test_latency_small_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.latencysmall')

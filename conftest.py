@@ -29,6 +29,20 @@ REQUIREMENT = os.path.join(DIR, 'requirements/')
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 
 
+def pytest_generate_tests(metafunc):
+    has_decks = metafunc.definition.get_closest_marker('decks')
+    has_properties = metafunc.definition.get_closest_marker('requirements')
+    has_decks = has_decks.args if has_decks else []
+    has_properties = has_properties.args if has_properties else []
+
+    devices = get_devices(has_decks,has_properties)
+    if devices:
+        param_name = 'test_setup' if 'test_setup' in metafunc.fixturenames else 'dev'
+        metafunc.parametrize(param_name, devices, indirect=True if param_name == 'test_setup' else False, ids=lambda d: d.name)
+    else:
+        print(f'No devices found for test {metafunc.definition.name}')
+        metafunc.parametrize("test_setup", [pytest.param(None, marks=pytest.mark.skip(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in module
+
 class USB_Power_Control_Action(str, Enum):
     ON     = 'on'
     OFF    = 'off'
@@ -54,10 +68,11 @@ class BCDevice:
             pass
 
         self.decks = []
-
+        self.properties = []
         if 'decks' in device:
             self.decks = device['decks']
-
+        if 'properties' in device:
+            self.properties = device['properties']
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -258,8 +273,7 @@ def get_bl_address(dev: BCDevice) -> str:
     link.close()
     return address
 
-
-def get_devices() -> List[BCDevice]:
+def get_devices(has_decks: List[str]=[], has_properties: List[str]=[]) -> List[BCDevice]:
     devices = list()
 
     site = os.getenv('CRAZY_SITE')
@@ -275,9 +289,12 @@ def get_devices() -> List[BCDevice]:
 
         for name, device in site_t['device'].items():
             if(not devicenames or name in devicenames):
-                devices.append(BCDevice(name, device))
+                dev = BCDevice(name, device)
+                if all(deck in dev.decks for deck in has_decks):
+                    if all(prop in dev.properties for prop in has_properties):
+                        devices.append(dev)
     except Exception:
-        raise Exception('Failed to parse toml %s!' % path)
+        raise Exception(f'Failed to parse toml {path}!')
     return devices
 
 

@@ -23,12 +23,7 @@ from cflib.crazyflie.syncLogger import SyncLogger
 # get_devices() will be passed to test_setup() in conftest.py before being used
 # as a parameter in the test methods.
 #
-@pytest.mark.parametrize(
-    'test_setup',
-    conftest.get_devices(),
-    indirect=True,
-    ids=lambda d: d.name
-)
+
 class TestDecks:
 
     def test_deck_present(self, test_setup: conftest.DeviceFixture):
@@ -46,13 +41,12 @@ class TestDecks:
             assert is_deck_present
 
 
+    @pytest.mark.decks("bcDWM1000")
     def test_loco_deck_loop_is_running(self, test_setup: conftest.DeviceFixture):
         '''
         Check that the event loop in the loco deck driver is running, this is indicated by read and writes to the SPI
         bus.
         '''
-        if not test_setup.has_loco_deck:
-            pytest.skip('Only on loco decks')
 
         assert test_setup.device.connect_sync()
 
