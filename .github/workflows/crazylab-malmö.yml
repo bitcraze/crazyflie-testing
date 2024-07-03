@@ -51,7 +51,7 @@ jobs:
         run: python3 management/program.py --file nightly/firmware-cf2-nightly.zip
 
       - name: Run test suite
-        run: pytest --verbose --junit-xml ${{env.TEST_FILE}} tests/QA
+        run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml tests/QA
 
       - name: Checkout Crazyflie python library
         uses: actions/checkout@v4
@@ -69,8 +69,8 @@ jobs:
       - name: Upload test file
         uses: actions/upload-artifact@v4
         with:
-          name: test_report
-          path: ${{env.TEST_FILE}}
+          name: test_report_${{github.run_number}}
+          path: ${{env.TEST_FILE}}.html
   
       - name: Pretty print test results
         if: always()

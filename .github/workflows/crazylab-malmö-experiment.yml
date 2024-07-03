@@ -21,7 +21,7 @@ jobs:
   testsuite_at_crazylab:
     env:
       CRAZY_SITE: crazylab-malmö
-      TEST_FILE: TestRun-${{github.run_number}}.xml
+      TEST_FILE: TestRun-${{github.run_number}}
       CRAZY_DEVICE: ${{github.event.inputs.devices}}
     runs-on: self-hosted
     timeout-minutes: 120
@@ -68,20 +68,21 @@ jobs:
           FILTER_INPUT="${{ github.event.inputs.filter }}"
           FILTER_OPTION=$(echo "$FILTER_INPUT" | xargs)  # Trim spaces and check for non-empty content
           if [ -n "$FILTER_OPTION" ]; then
-            pytest --verbose --junit-xml ${{env.TEST_FILE}} ${{github.event.inputs.category}} -k ${{ github.event.inputs.filter }}
+            pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml -k ${{ github.event.inputs.filter }}
           else
-            pytest --verbose --junit-xml ${{env.TEST_FILE}} ${{github.event.inputs.category}} 
+            pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml
           fi
       - name: Upload test file
         uses: actions/upload-artifact@v4
         with:
-          name: test_report
-          path: ${{env.TEST_FILE}}
+          name: test_report_${{github.run_number}}
+          path: ${{env.TEST_FILE}}.html
+          
 
       - name: Pretty print test results
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
-          path: ${{env.TEST_FILE}}
+          path: ${{env.TEST_FILE}}.xml
           summary: true
           title: Test results
