@@ -76,7 +76,7 @@ jobs:
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
-          path: ${{env.TEST_FILE}}
+          path: ${{env.TEST_FILE}}.xml
           summary: true
           title: Test results
 
