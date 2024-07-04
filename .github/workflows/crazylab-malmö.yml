@@ -15,7 +15,7 @@ jobs:
       options: --privileged
     env:
       CRAZY_SITE: crazylab-malmö
-      TEST_FILE: TestRun-${{github.run_number}}.xml
+      TEST_FILE: TestRun-${{github.run_number}}
     steps:
       - name: Install libusb
         run: |
