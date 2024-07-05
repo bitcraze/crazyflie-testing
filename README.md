@@ -12,13 +12,21 @@ Before running the test suite you need to define a site in the `sites/` folder.
 The site `TOML` tells the test suite which devices to tests, what capabilities
 and decks they have, and how to reach them.
 
+The default site will be single-cf
+
 See [site docmentation](docs/development/sites.md) for the site file format to define new test sites.
 ## Running the test
 
 To run the test for a single Crazyflie, run:
 ```
-CRAZY_SITE=single-cf pytest --verbose tests/QA
+CRAZY_SITE=single-cf pytest --verbose tests/QA -k test_filter
 ```
+
+or specify the name(s) of crazyflies to run on
+```
+CRAZY_DEVICE=cf21_flow2_multiranger,cf21_flow2... pytest --verbose tests/QA -k test_filter
+```
+
 
 If you have defined your own site, then change the `CRAZY_SITE` environment
 variable to reflect that. For more information see the [running tests documentation](docs/usetests.md).

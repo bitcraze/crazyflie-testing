@@ -24,7 +24,7 @@ from cflib.utils.power_switch import PowerSwitch
 DIR = os.path.dirname(os.path.realpath(__file__))
 SITE_PATH = os.path.join(DIR, 'sites/')
 REQUIREMENT = os.path.join(DIR, 'requirements/')
-
+DEFAULT_SITE = 'single-cf'
 
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 
@@ -289,7 +289,7 @@ def get_bl_address(dev: BCDevice) -> str:
 def get_devices(has_decks: List[str]=[], has_properties: List[str]=[]) -> List[BCDevice]:
     devices = list()
 
-    site = os.getenv('CRAZY_SITE')
+    site = os.getenv('CRAZY_SITE') or DEFAULT_SITE
     devicenames = os.getenv('CRAZY_DEVICE')
     if site is None:
         raise Exception('No CRAZY_SITE env specified!')
