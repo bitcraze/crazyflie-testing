@@ -37,6 +37,9 @@ radio = "radio://0/50/2M/E7E7E71706"
 # A device _can_ have decks, could be empty
 decks = ["bcFlow2", "bcLighthouse4"]
 
+# A device can have properties, could be empty
+properties = ["powerMeasurement", "wifi"]
+
 # A device _may_ have a bootloader URI, if it has we can use it to try to recover
 # from bootloader mode.
 bootloader_radio = "radio://0/0/2M/B19CF77F05?safelink=0"
