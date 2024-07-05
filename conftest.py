@@ -41,7 +41,20 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize(param_name, devices, indirect=True if param_name == 'test_setup' else False, ids=lambda d: d.name)
     else:
         print(f'No devices found for test {metafunc.definition.name}')
-        metafunc.parametrize("test_setup", [pytest.param(None, marks=pytest.mark.skip(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in module
+        metafunc.parametrize("test_setup", [pytest.param(None, marks=pytest.mark.ignore(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in module
+
+
+def pytest_collection_modifyitems(config, items):
+
+    selected = list(items)
+    deselected = []
+    for test_item in items:
+        if test_item.get_closest_marker('ignore'):
+            selected.remove(test_item)
+            deselected.append(test_item)
+
+    items[:] = selected
+    config.hook.pytest_deselected(items=deselected)
 
 class USB_Power_Control_Action(str, Enum):
     ON     = 'on'
