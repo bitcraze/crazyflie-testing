@@ -1,0 +1,9 @@
+name: Crazy Stab Lab Mac Lib experiment 🗡️
+
+# Controls when the action will run.
+on:
+  workflow_dispatch:
+jobs:
+  lib_tests_on_mac:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 120
