@@ -23,7 +23,7 @@ jobs:
       CRAZY_SITE: crazylab-malmö
       TEST_FILE: TestRun-${{github.run_number}}
       CRAZY_DEVICE: ${{github.event.inputs.devices}}
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux]
     timeout-minutes: 120
     container:
       image: python:3.9.7-buster

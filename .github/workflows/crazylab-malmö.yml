@@ -8,7 +8,7 @@ on:
 
 jobs:
   testsuite_at_crazylab:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux]
     timeout-minutes: 120
     container:
       image: python:3.9.7-buster
