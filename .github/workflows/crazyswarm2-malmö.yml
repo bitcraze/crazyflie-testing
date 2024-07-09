@@ -8,7 +8,7 @@ on:
 
 jobs:
   cs2_at_crazylab:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux]
     timeout-minutes: 10
     container:
       image: ros:humble

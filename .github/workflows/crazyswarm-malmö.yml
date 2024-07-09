@@ -6,7 +6,7 @@ on:
 
 jobs:
   swarm_at_crazylab:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux]
     container:
       image: ros:noetic
       options: --privileged
