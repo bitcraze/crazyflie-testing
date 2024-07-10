@@ -127,14 +127,13 @@ class TestLogVariables:
         with pytest.raises(AttributeError):
             test_setup.device.cf.log.add_config(config)
 
+    @pytest.mark.exclude_decks('bcDWM1000','bcFlow', 'bcFlow2', 'lighthouse4')
     def test_log_stress(self, test_setup: conftest.DeviceFixture):
         '''
         Make sure we can receive all packets requested when having an effective
         rate of logging.rate packets/s.
         '''
         requirement = conftest.get_requirement('logging.rate')
-        if test_setup.kalman_active:
-            pytest.skip('Only on non-kalman')
 
         configs = []
         duration = 10.0

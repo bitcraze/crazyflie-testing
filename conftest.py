@@ -24,7 +24,7 @@ from cflib.utils.power_switch import PowerSwitch
 DIR = os.path.dirname(os.path.realpath(__file__))
 SITE_PATH = os.path.join(DIR, 'sites/')
 REQUIREMENT = os.path.join(DIR, 'requirements/')
-
+DEFAULT_SITE = 'single-cf'
 
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 
@@ -32,16 +32,30 @@ USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 def pytest_generate_tests(metafunc):
     has_decks = metafunc.definition.get_closest_marker('decks')
     has_properties = metafunc.definition.get_closest_marker('requirements')
+    exclude_decks = metafunc.definition.get_closest_marker('exclude_decks')
     has_decks = has_decks.args if has_decks else []
     has_properties = has_properties.args if has_properties else []
-
-    devices = get_devices(has_decks,has_properties)
+    exclude_decks = exclude_decks.args if exclude_decks else []
+    devices = get_devices(has_decks,has_properties, exclude_decks)
     if devices:
         param_name = 'test_setup' if 'test_setup' in metafunc.fixturenames else 'dev'
         metafunc.parametrize(param_name, devices, indirect=True if param_name == 'test_setup' else False, ids=lambda d: d.name)
     else:
         print(f'No devices found for test {metafunc.definition.name}')
-        metafunc.parametrize("test_setup", [pytest.param(None, marks=pytest.mark.skip(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in module
+        metafunc.parametrize("test_setup", [pytest.param(None, marks=pytest.mark.ignore(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in module
+
+
+def pytest_collection_modifyitems(config, items):
+
+    selected = list(items)
+    deselected = []
+    for test_item in items:
+        if test_item.get_closest_marker('ignore'):
+            selected.remove(test_item)
+            deselected.append(test_item)
+
+    items[:] = selected
+    config.hook.pytest_deselected(items=deselected)
 
 class USB_Power_Control_Action(str, Enum):
     ON     = 'on'
@@ -273,10 +287,11 @@ def get_bl_address(dev: BCDevice) -> str:
     link.close()
     return address
 
-def get_devices(has_decks: List[str]=[], has_properties: List[str]=[]) -> List[BCDevice]:
+
+def get_devices(has_decks: List[str]=[], has_properties: List[str]=[], exclude_decks= []) -> List[BCDevice]:
     devices = list()
 
-    site = os.getenv('CRAZY_SITE')
+    site = os.getenv('CRAZY_SITE') or DEFAULT_SITE
     devicenames = os.getenv('CRAZY_DEVICE')
     if site is None:
         raise Exception('No CRAZY_SITE env specified!')
@@ -288,11 +303,15 @@ def get_devices(has_decks: List[str]=[], has_properties: List[str]=[]) -> List[B
         site_t = toml.load(open(path, 'r'))
 
         for name, device in site_t['device'].items():
-            if(not devicenames or name in devicenames):
-                dev = BCDevice(name, device)
-                if all(deck in dev.decks for deck in has_decks):
-                    if all(prop in dev.properties for prop in has_properties):
-                        devices.append(dev)
+            dev = BCDevice(name, device)
+            conditions = [
+                (not devicenames or name in devicenames),
+                all(deck in dev.decks for deck in has_decks),
+                all(prop in dev.properties for prop in has_properties),
+                all(deck not in dev.decks for deck in exclude_decks)
+            ]
+            if all(conditions):
+                    devices.append(dev)
     except Exception:
         raise Exception(f'Failed to parse toml {path}!')
     return devices
