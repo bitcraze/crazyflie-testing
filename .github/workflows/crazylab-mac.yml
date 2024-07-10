@@ -3,6 +3,8 @@ name: Crazy Stab Lab Mac 🗡️
 # Controls when the action will run.
 on:
   workflow_dispatch:
+  schedule:
+    - cron:  '0 3 * * *'
 jobs:
   #TODO add flashing of crazyflies
   checkout_sources:
