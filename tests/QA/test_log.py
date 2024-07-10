@@ -23,6 +23,7 @@ from cflib.crazyflie.syncLogger import SyncLogger
 
 class TestLogVariables:
 
+    @pytest.mark.sanity
     def test_log_async(self, test_setup: conftest.DeviceFixture):
         ''' Make sure we receive ~100 rows 1 second at 100Hz '''
         requirement = conftest.get_requirement('logging.basic')
@@ -127,6 +128,7 @@ class TestLogVariables:
         with pytest.raises(AttributeError):
             test_setup.device.cf.log.add_config(config)
 
+    @pytest.mark.sanity
     @pytest.mark.exclude_decks('bcDWM1000','bcFlow', 'bcFlow2', 'lighthouse4')
     def test_log_stress(self, test_setup: conftest.DeviceFixture):
         '''
