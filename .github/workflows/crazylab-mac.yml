@@ -1,0 +1,45 @@
+name: Crazy Stab Lab Mac 🗡️
+
+# Controls when the action will run.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 3 * * *'
+jobs:
+  #TODO add flashing of crazyflies
+  checkout_sources:
+    runs-on: [self-hosted, macOS]
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+ 
+  sanity_testsuite_on_mac:
+    needs: checkout_sources
+    runs-on: [self-hosted, macOS]
+    strategy:
+      matrix:
+        python_version: ["3.8","3.9", "3.10", "3.11"]
+      fail-fast: false
+    env:
+      CRAZY_SITE: crazylab-mac
+      PYTHON_VERSION: ${{ matrix.python_version }}
+    timeout-minutes: 120
+    steps:
+      - name: Setup python environment
+        run: |
+          $(brew --prefix)/bin/python${PYTHON_VERSION} -m venv venv
+          source venv/bin/activate
+
+      - name: Install pytest
+        run: venv/bin/pip install pytest
+
+      - name: Install Crazyflie python library
+        run: venv/bin/pip install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+
+      - name: Install requirements
+        run:  | 
+          venv/bin/pip install -r requirements.txt
+      - name: Run test suite
+        run: venv/bin/python -m pytest --verbose -m sanity tests/QA
+
+          

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class TestParameters:
+    @pytest.mark.sanity
     def test_param_ronly(self, test_setup: conftest.DeviceFixture):
         with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
             # Get a known (core) read-only parameter
@@ -58,6 +59,7 @@ class TestParameters:
         assert not element.is_extended()
         assert not element.is_persistent()
 
+    @pytest.mark.sanity
     def test_param_persistent_store(self, test_setup: conftest.DeviceFixture):
         # Get a known persistent parameter
         param = "sound.effect"
@@ -97,7 +99,8 @@ class TestParameters:
 
         val = test_setup.device.cf.param.get_value(param)
         assert int(val) == value
-
+        
+    @pytest.mark.sanity
     def test_param_persistent_clear(self, test_setup: conftest.DeviceFixture):
         assert test_setup.device.connect_sync()
 
