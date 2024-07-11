@@ -1,0 +1,5 @@
+version = 1
+
+[device.cf21_stock]
+radio = "radio://0/50/2M/E7E7E71801"
+
