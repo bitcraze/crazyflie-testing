@@ -23,16 +23,15 @@ def generate_launch_description():
         name='set_param',
         )
 
+    
+    crazyswarm2_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('crazyflie'), 'launch'), '/launch.py']),
+        launch_arguments={'crazyflies_yaml_file': 'swarms/cs2-test-yamls/crazyflies_stablab.yaml', 'backend': 'cpp', 'mocap': 'False', 'rviz': 'False', 'gui': 'False'}.items()
+    )   
+
 
     return LaunchDescription([
-        DeclareLaunchArgument('server_yaml_file', default_value=''),
-        Node(
-            package='crazyflie',
-            executable='crazyflie_server',
-            name='crazyflie_server',
-            output='screen',
-            parameters= ['swarms/cs2-test-yamls/cs2_server.yaml']
-        ),
+        crazyswarm2_launch,
         example_node,
         RegisterEventHandler(
             OnProcessExit(

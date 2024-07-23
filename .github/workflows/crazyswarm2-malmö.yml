@@ -54,5 +54,5 @@ jobs:
           source /opt/ros/humble/setup.bash
           ls
           source ros2_ws/install/setup.bash
-          ros2 launch swarms/cs2-test-yamls/launch.py server_yaml_file:='swarms/cs2-test-yamls/cs2_server.yaml'
+          ros2 launch swarms/cs2-test-yamls/launch.py
         shell: bash
