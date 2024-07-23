@@ -1,0 +1,112 @@
+robots:
+  cf1:
+    enabled: true
+    uri: radio://0/50/2M/E7E7E71701
+    initial_position:
+    - 0.0
+    - 0.0
+    - 0.0
+    type: cf21
+  cf2:
+    enabled: true
+    uri: radio://0/50/2M/E7E7E71702
+    initial_position:
+    - 0.0
+    - 0.0
+    - 0.0
+    type: cf21
+  cf3:
+    enabled: true
+    uri: radio://0/50/2M/E7E7E71703
+    initial_position:
+    - 0.0
+    - 0.0
+    - 0.0
+    type: cf21
+  cf4:
+    enabled: true
+    uri: radio://0/50/2M/E7E7E71704
+    initial_position:
+    - 0.0
+    - 0.0
+    - 0.0
+    type: cf21
+  cf5:
+    enabled: true
+    uri: radio://0/50/2M/E7E7E71705
+    initial_position:
+    - 0.0
+    - 0.0
+    - 0.0
+    type: cf21
+  cf6:
+    enabled: true
+    uri: radio://0/50/2M/E7E7E71706
+    initial_position:
+    - 0.0
+    - 0.0
+    - 0.0
+    type: cf21
+  cf7:
+    enabled: true
+    uri: radio://0/50/2M/E7E7E71707
+    initial_position:
+    - 0.0
+    - 0.0
+    - 0.0
+    type: cf21
+#      cf8:
+#        enabled: true
+#        uri: radio://0/50/2M/E7E7E71708
+#        initial_position:
+#        - 0.0
+#        - 0.0
+#        - 0.0
+#        type: cf21
+#      cf9:
+#        enabled: true
+#        uri: radio://0/50/2M/E7E7E71709
+#        initial_position:
+#        - 0.0
+#        - 0.0
+#        - 0.0
+#        type: cf21
+robot_types:
+  cf21:
+    motion_capture:
+      enabled: false
+      marker: default_single_marker
+      dynamics: default
+    big_quad: false
+    battery:
+      voltage_warning: 3.8
+      voltage_critical: 3.7
+  cf21_mocap_deck:
+    motion_capture:
+      enabled: true
+      marker: mocap_deck
+      dynamics: default
+    big_quad: false
+    battery:
+      voltage_warning: 3.8
+      voltage_critical: 3.7
+all:
+  firmware_logging:
+    enabled: true
+    default_topics:
+      pose:
+        frequency: 10
+      status:
+        frequency: 1
+  firmware_params:
+    commander:
+      enHighLevel: 1
+    stabilizer:
+      estimator: 2
+      controller: 2
+    locSrv:
+      extPosStdDev: 1e-3
+      extQuatStdDev: 0.05
+  broadcasts:
+    num_repeats: 15
+    delay_between_repeats_ms: 1
