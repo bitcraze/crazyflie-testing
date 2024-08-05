@@ -73,15 +73,15 @@ jobs:
             pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml
           fi
       - name: Upload test file
+        if: always()
         uses: actions/upload-artifact@v4
         with:
+          if-no-files-found: warn
           name: test_report_${{github.run_number}}
           path: | 
             ${{env.TEST_FILE}}.html
             ${{env.TEST_FILE}}.xml
             assets/style.css
-
-          
 
       - name: Pretty print test results
         if: always()
