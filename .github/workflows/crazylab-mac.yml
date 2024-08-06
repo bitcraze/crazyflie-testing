@@ -21,6 +21,7 @@ jobs:
         python_version: ["3.8","3.9", "3.10", "3.11"]
       fail-fast: false
     env:
+      TEST_FILE: Sanity_test_job-${{github.run_number}}
       CRAZY_SITE: crazylab-mac
       PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
@@ -40,6 +41,25 @@ jobs:
         run:  | 
           venv/bin/pip install -r requirements.txt
       - name: Run test suite
-        run: venv/bin/python -m pytest --verbose -m sanity tests/QA
+        run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.html --junit-xml ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.xml -m sanity tests/QA
+
+      - name: Upload test file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: test_report_${{github.run_number}}sanity_${{ matrix.python_version }}
+          path: | 
+            ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.html 
+            ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.xml 
+            assets/style.css
+
+      - name: Pretty print test results
+        if: always()
+        uses: pmeier/pytest-results-action@main
+        with:
+          path: ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.xml 
+          summary: true
+          title: Test results
 
           
