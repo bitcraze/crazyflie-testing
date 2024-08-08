@@ -251,6 +251,10 @@ def test_setup(request):
     yield fix  # code after this point will run as teardown after test
     fix.device.cf.close_link()
 
+@pytest.fixture
+def dev(request) -> BCDevice:
+    return request.param
+
 
 def get_bl_address(dev: BCDevice) -> str:
     '''
