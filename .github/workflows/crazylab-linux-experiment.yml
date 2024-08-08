@@ -54,7 +54,7 @@ jobs:
         with:
           repo: bitcraze/crazyflie-release
           workflow: nightly-experiment.yml
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v4
 
       - name: Reset power to all devices
         run: python3 management/usb-power-reset.py -a reset
