@@ -1,92 +1,61 @@
-name: Crazy Stab Lab experiment 🗡️
+name: Crazy Stab Lab Experiment 🗡️
 
 # Controls when the action will run.
 on:
   workflow_dispatch:
-    inputs:
-      category:
-        type: string
-        description: 'Test category.' #Format: tests/.../test_*.py'
-      filter:
-        type: string
-        description: 'Select a filter to filter the tests on' #NOTE to filter on more than one test, use the following syntax: -k "filter1 or filter2"
-      devices:
-        type: string
-        description: 'Devices to run the tests on.' #Format: <device1>,<device2>,...'
-
-#  schedule:
-#  - cron:  '0 6 * * *'
+  schedule:
+  - cron:  '0 2 * * *'
 
 jobs:
-  testsuite_at_crazylab:
-    env:
-      CRAZY_SITE: crazylab-malmö
-      TEST_FILE: TestRun-${{github.run_number}}
-      CRAZY_DEVICE: ${{github.event.inputs.devices}}
+  sanity_testsuite_on_linux:
     runs-on: [self-hosted, linux]
+    strategy:
+      matrix:
+        python_version: ["3.8","3.9", "3.10", "3.11"]
+      fail-fast: false
+    env:
+      TEST_FILE: Sanity_test_job-${{github.run_number}}
+      CRAZY_SITE: crazylab-mac
+      PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     container:
-      image: python:3.9.7-buster
+      image: python:${{ matrix.python_version }}-buster
       options: --privileged
     steps:
-      - name: Install libusb
-        run: |
-          apt update
-          apt install -y libusb-1.0-0 uhubctl
+    - name: Upgrade pip
+      run:  |
+        pip3 install --upgrade pip
 
-      - name: Upgrade pip
-        run:  |
-          pip3 install --upgrade pip
+    - name: Install pytest
+      run: pip3 install pytest
 
-      - name: Install pytest
-        run: pip3 install pytest
+    - name: Install Crazyflie python library
+      run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
 
-      - name: Install Crazyflie python library
-        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+    - name: Check out sources
+      uses: actions/checkout@v4
 
-      - name: Check out sources
-        uses: actions/checkout@v4
+    - name: Install requirements
+      run: pip3 install -r requirements.txt
 
-      - name: Install requirements
-        run: pip3 install -r requirements.txt
+    - name: Run test suite
+      run: pytest --verbose --html=${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.html --junit-xml ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.xml -m sanity tests/QA
+      
+    - name: Upload test file
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        if-no-files-found: warn
+        name: test_report_${{github.run_number}}sanity_${{ matrix.python_version }}
+        path: | 
+          ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.html 
+          ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.xml 
+          assets/style.css
 
-      - name: Download latest firmware files
-        with:
-          repo: bitcraze/crazyflie-release
-          workflow: nightly-experiment.yml
-        uses: dawidd6/action-download-artifact@v3
-
-      - name: Reset power to all devices
-        run: python3 management/usb-power-reset.py -a reset
-
-      - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file nightly-experiment/firmware-cf2-nightly-experiment.zip
-      - name: Run test suite
-        env:
-          FILTER: ${{ github.event.inputs.filter || '""'}}
-        run: |
-          FILTER_INPUT="${{ github.event.inputs.filter }}"
-          FILTER_OPTION=$(echo "$FILTER_INPUT" | xargs)  # Trim spaces and check for non-empty content
-          if [ -n "$FILTER_OPTION" ]; then
-            pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml -k ${{ github.event.inputs.filter }}
-          else
-            pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml
-          fi
-      - name: Upload test file
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          if-no-files-found: warn
-          name: test_report_${{github.run_number}}
-          path: | 
-            ${{env.TEST_FILE}}.html
-            ${{env.TEST_FILE}}.xml
-            assets/style.css
-
-      - name: Pretty print test results
-        if: always()
-        uses: pmeier/pytest-results-action@main
-        with:
-          path: ${{env.TEST_FILE}}.xml
-          summary: true
-          title: Test results
+    - name: Pretty print test results
+      if: always()
+      uses: pmeier/pytest-results-action@main
+      with:
+        path: ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.xml 
+        summary: true
+        title: Test results

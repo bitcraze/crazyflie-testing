@@ -7,14 +7,14 @@ on:
     - cron:  '0 6 * * *'
 jobs:
   #TODO add flashing of crazyflies
-  checkout_sources:
+  checkout_sources_mac:
     runs-on: [self-hosted, macOS]
     steps:
       - name: Check out sources
         uses: actions/checkout@v4
  
   sanity_testsuite_on_mac:
-    needs: checkout_sources
+    needs: checkout_sources_mac
     runs-on: [self-hosted, macOS]
     strategy:
       matrix:
@@ -61,5 +61,58 @@ jobs:
           path: ${{env.TEST_FILE}}_sanity_${{ matrix.python_version }}.xml 
           summary: true
           title: Test results
+
+  sanity_testsuite_on_linux:
+    runs-on: [self-hosted, linux]
+    strategy:
+      matrix:
+        python_version: ["3.8","3.9", "3.10", "3.11","3.12"]
+      fail-fast: false
+    env:
+      TEST_FILE: Linux_sanity_test_job-${{github.run_number}}-${{ matrix.python_version }}
+      CRAZY_SITE: crazylab-mac
+      PYTHON_VERSION: ${{ matrix.python_version }}
+    timeout-minutes: 120
+    container:
+      image: python:${{ matrix.python_version }}-buster
+      options: --privileged
+    steps:
+    - name: Upgrade pip
+      run:  |
+        pip3 install --upgrade pip
+
+    - name: Install pytest
+      run: pip3 install pytest
+
+    - name: Install Crazyflie python library
+      run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+
+    - name: Check out sources
+      uses: actions/checkout@v4
+
+    - name: Install requirements
+      run: pip3 install -r requirements.txt
+
+    - name: Run test suite
+      run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
+      
+    - name: Upload test file
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        if-no-files-found: warn
+        name: test_report_${{github.run_number}}sanity_${{ matrix.python_version }}
+        path: | 
+          ${{env.TEST_FILE}}.html 
+          ${{env.TEST_FILE}}_${{ matrix.python_version }}.xml 
+          assets/style.css
+
+    - name: Pretty print test results
+      if: always()
+      uses: pmeier/pytest-results-action@main
+      with:
+        path: ${{env.TEST_FILE}}.xml 
+        summary: true
+        title: Test results
 
           
