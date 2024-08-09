@@ -63,6 +63,8 @@ jobs:
           title: Test results
 
   sanity_testsuite_on_linux:
+    if: always()
+    needs: sanity_testsuite_on_mac #They should not run simultaneously. But one after the other
     runs-on: [self-hosted, linux]
     strategy:
       matrix:
