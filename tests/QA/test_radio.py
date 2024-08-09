@@ -36,17 +36,18 @@ class TestRadio:
         requirement = conftest.get_requirement('radio.latencybig')
         assert(latency(dev.link_uri, requirement['packet_size']) < requirement['limit_high_ms'])
 
-    @pytest.mark.skip(reason='This test does not pass reliably. We need flow control between nrf and stm32')
+    @pytest.mark.requirements("syslink_flowctrl")
     def test_bandwidth_small_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.bwsmall')
         assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
-    @pytest.mark.skip(reason='This test does not pass reliably. We need flow control between nrf and stm32')
+    @pytest.mark.requirements("syslink_flowctrl")
     def test_bandwidth_big_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.bwbig')
         assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
-    @pytest.mark.skip(reason='This test does not pass reliably. We need flow control between nrf and stm32')
+    
+    @pytest.mark.requirements("syslink_flowctrl")
     def test_reliability(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.reliability')
         # The bandwidth function will assert if there is any packet loss
