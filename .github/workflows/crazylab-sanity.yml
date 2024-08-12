@@ -72,7 +72,8 @@ jobs:
       fail-fast: false
     env:
       TEST_FILE: Linux_sanity_test_job-${{github.run_number}}-${{ matrix.python_version }}
-      CRAZY_SITE: crazylab-mac
+      CRAZY_SITE: crazylab-malmö
+      CRAZY_DEVICE: cf21_stock
       PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     container:
