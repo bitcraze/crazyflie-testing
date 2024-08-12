@@ -37,13 +37,14 @@ def pytest_generate_tests(metafunc):
     has_properties = has_properties.args if has_properties else []
     exclude_decks = exclude_decks.args if exclude_decks else []
     devices = get_devices(has_decks,has_properties, exclude_decks)
-    if devices:
-        param_name = 'test_setup' if 'test_setup' in metafunc.fixturenames else 'dev'
-        metafunc.parametrize(param_name, devices, indirect=True if param_name == 'test_setup' else False, ids=lambda d: d.name)
-    else:
-        print(f'No devices found for test {metafunc.definition.name}')
-        metafunc.parametrize("test_setup", [pytest.param(None, marks=pytest.mark.ignore(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in module
-
+    for fixture in metafunc.fixturenames:
+        if fixture == 'request':
+            continue
+        if devices:
+            metafunc.parametrize(fixture, devices, indirect=(fixture=='test_setup') , ids=lambda d: d.name)
+        else:
+            print(f'No devices found for test {metafunc.definition.name}')
+            metafunc.parametrize(fixture, [pytest.param(None, marks=pytest.mark.ignore(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in modul
 
 def pytest_collection_modifyitems(config, items):
 
