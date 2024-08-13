@@ -60,7 +60,7 @@ jobs:
         run: python3 management/usb-power-reset.py -a reset
 
       - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file nightly-experiment/firmware-cf2-nightly-experiment.zip
+        run: python3 management/program.py --file cf2-nightly-experiment/firmware-cf2-nightly-experiment.zip
       - name: Run test suite
         env:
           FILTER: ${{ github.event.inputs.filter || '""'}}
