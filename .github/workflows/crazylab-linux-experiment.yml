@@ -78,7 +78,7 @@ jobs:
         with:
           if-no-files-found: warn
           name: test_report_${{github.run_number}}
-          path: | 
+          path: |
             ${{env.TEST_FILE}}.html
             ${{env.TEST_FILE}}.xml
             assets/style.css
@@ -90,3 +90,5 @@ jobs:
           path: ${{env.TEST_FILE}}.xml
           summary: true
           title: Test results
+
+
