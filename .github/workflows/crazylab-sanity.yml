@@ -47,7 +47,7 @@ jobs:
           venv/bin/pip install -r requirements.txt
 
       - name: Upgrade devices to latest firmware
-        run: venv/bin/python management/program.py --file cf2-nightly/firmware-cf2-nightly.zip
+        run: venv/bin/python management/program.py --file cf2-nightly/firmware-cf2-nightly.zip --retries 3
 
       - name: Run test suite
         run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
@@ -120,7 +120,7 @@ jobs:
       run: python3 management/usb-power-reset.py -a reset
 
     - name: Upgrade devices to latest firmware
-      run: python3 management/program.py --file cf2-nightly/firmware-cf2-nightly.zip
+      run: python3 management/program.py --file cf2-nightly/firmware-cf2-nightly.zip --retries 3
 
     - name: Run test suite
       run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
