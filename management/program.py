@@ -21,6 +21,7 @@ import traceback
 import threading
 import signal
 import sys
+from recover import recover
 
 # Timeout for the program operation.
 TIMEOUT = 10 * 60
@@ -57,21 +58,29 @@ def progress_cb(msg: str, percent: int):
     current_frame += 1
 
 
-def program(fw_file: Path) -> bool:
+def program(fw_file: Path, retries=0) -> bool:
     # Setup the alarm handler and ask the OS to send a SIGALRM to the process after TIMEOUT seconds
     signal.signal(signal.SIGALRM, alarm_handler)
 
     for dev in get_devices():
-        try:
-            signal.alarm(TIMEOUT)
-            print('Programming device: {}'.format(dev))
-            dev.flash(fw_file, progress_cb)
-            signal.alarm(0)
-        except Exception as err:
-            signal.alarm(0)
-            print('Programming failed: {}'.format(str(err)), file=sys.stderr)
-            traceback.print_exc()
-            return False
+        while True:
+            try:
+                signal.alarm(TIMEOUT)
+                print('Programming device: {}'.format(dev))
+                dev.flash(fw_file, progress_cb)
+                signal.alarm(0)
+                break
+            except Exception as err:
+                if retries > 0:
+                    print('Programming failed, retrying....')
+                    recover(dev.name)
+                    retries -= 1
+                    continue
+                else:
+                    signal.alarm(0)
+                    print('Programming failed: {}'.format(str(err)), file=sys.stderr)
+                    traceback.print_exc()
+                    return False
 
     return True
 
@@ -79,7 +88,8 @@ def program(fw_file: Path) -> bool:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Flash firmware to all devices in site')
     parser.add_argument('--file', type=Path, help='Path to firmware file', required=True)
+    parser.add_argument('--retries', type=int, help='Number of programming retries', default=0)
     p = parser.parse_args()
 
-    if not program(p.file):
+    if not program(p.file,p.retries):
         sys.exit(1)
