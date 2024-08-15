@@ -154,9 +154,14 @@ class BCDevice:
                 targets = [Target('cf2', 'stm32', 'fw', [], [])]
             else:
                 targets = []
-
-            self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
-                               enable_console_log=True)
+            try:
+                print('Trying cold flash')
+                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
+                               enable_console_log=True, warm=False)
+            except Exception as e:
+                print('Failed cold flash (as expected), trying warm flash')
+                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
+                    enable_console_log=True, warm=True)
         finally:
             self.bl.close()
 
