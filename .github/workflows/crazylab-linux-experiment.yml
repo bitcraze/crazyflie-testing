@@ -13,6 +13,11 @@ on:
       devices:
         type: string
         description: 'Devices to run the tests on.' #Format: <device1>,<device2>,...'
+      experimentalFW:
+        description: 'Flash FW from last nightly-experiment action'
+        type: boolean
+        required: false
+        default: false
 
 #  schedule:
 #  - cron:  '0 6 * * *'
@@ -50,17 +55,26 @@ jobs:
       - name: Install requirements
         run: pip3 install -r requirements.txt
 
+      - name: Set FW file name
+        run: |
+          if ${{github.event.inputs.experimentalFW}} == 'true'; then
+            echo "FW_ACTION=nightly-experiment" >> $GITHUB_ENV
+          else
+            echo "FW_ACTION=nightly" >> $GITHUB_ENV
+            fi
+
       - name: Download latest firmware files
         with:
           repo: bitcraze/crazyflie-release
-          workflow: nightly-experiment.yml
+          workflow: ${{env.FW_ACTION}}.yml
         uses: dawidd6/action-download-artifact@v4
 
       - name: Reset power to all devices
         run: python3 management/usb-power-reset.py -a reset
 
+
       - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file cf2-nightly-experiment/firmware-cf2-nightly-experiment.zip
+        run: python3 management/program.py --file cf2-${{env.FW_ACTION}}/firmware-cf2-${{env.FW_ACTION}}.zip
       - name: Run test suite
         env:
           FILTER: ${{ github.event.inputs.filter || '""'}}
