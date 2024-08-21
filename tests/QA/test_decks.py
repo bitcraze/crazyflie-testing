@@ -29,12 +29,14 @@ class TestDecks:
     def test_deck_present(self, test_setup: conftest.DeviceFixture):
         '''
         Check that all decks defined for the device in the site
-        is detected, using the parameter interface.
+        is detected, using the parameter interface. If no decks are available test that Exception is raised.
         '''
-        if not test_setup.device.decks:
-            pytest.skip('no decks on device')
-
         assert test_setup.device.connect_sync()
+
+        if not test_setup.device.decks:
+            with pytest.raises(UnboundLocalError):
+                is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
+                assert not is_deck_present
 
         for deck in test_setup.device.decks:
             is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
