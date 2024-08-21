@@ -28,6 +28,8 @@ DEFAULT_SITE = 'single-cf'
 
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 
+ALL_DECKS= ['bcLighthouse4', 'bcFlow2', 'bcDWM1000', 'bcMultiranger', 'bcUSD', 'bcAI', 'bcLoco']
+
 
 def pytest_generate_tests(metafunc):
     has_decks = metafunc.definition.get_closest_marker('decks')
@@ -85,7 +87,10 @@ class BCDevice:
         self.decks = []
         self.properties = []
         if 'decks' in device:
-            self.decks = device['decks']
+            if all(deck in ALL_DECKS for deck in device['decks']):
+                self.decks = device['decks']
+            else: 
+                raise Exception(f'Invalid decks in deck list of {self.name}: {device["decks"]}')
         if 'properties' in device:
             self.properties = device['properties']
         self.cf = Crazyflie(rw_cache='./cache')
