@@ -28,7 +28,7 @@ DEFAULT_SITE = 'single-cf'
 
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 
-ALL_DECKS= ['bcLighthouse4', 'bcFlow2', 'bcDWM1000', 'bcMultiranger', 'bcUSD', 'bcAI', 'bcLoco']
+ALL_DECKS= ['bcLighthouse4', 'bcFlow2', 'bcMultiranger', 'bcUSD', 'bcAI', 'bcLoco']
 
 
 def pytest_generate_tests(metafunc):
@@ -89,7 +89,7 @@ class BCDevice:
         if 'decks' in device:
             if all(deck in ALL_DECKS for deck in device['decks']):
                 self.decks = device['decks']
-            else: 
+            else:
                 raise Exception(f'Invalid decks in deck list of {self.name}: {device["decks"]}')
         if 'properties' in device:
             self.properties = device['properties']
@@ -251,8 +251,9 @@ class DeviceFixture:
 
     @property
     def has_loco_deck(self) -> bool:
+        loco_decks = ['bcLoco', 'bcDWM1000']
         if self._device.decks:
-            return 'bcDWM1000' in self._device.decks
+            return all(deck in loco_decks for deck in self._device.decks)
         return False
 
 @pytest.fixture
