@@ -15,6 +15,7 @@ import pytest
 import conftest
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
+from conftest import ALL_DECKS
 
 #
 # Using the indirect=True parameter when parametrizing a test allows to
@@ -29,18 +30,17 @@ class TestDecks:
     def test_deck_present(self, test_setup: conftest.DeviceFixture):
         '''
         Check that all decks defined for the device in the site
-        is detected, using the parameter interface. If no decks are available test that Exception is raised.
+        is detected, using the parameter interface. 
         '''
         assert test_setup.device.connect_sync()
 
-        if not test_setup.device.decks:
-            with pytest.raises(UnboundLocalError):
-                is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
-                assert not is_deck_present
-
-        for deck in test_setup.device.decks:
+        for deck in ALL_DECKS:
             is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
-            assert is_deck_present
+            if deck in test_setup.device.decks:
+                assert is_deck_present, f'Deck {deck} is not present'
+            else:
+                assert not is_deck_present, f'Device reporting {deck} is present but it is not'
+
 
 
     @pytest.mark.decks("bcDWM1000")
