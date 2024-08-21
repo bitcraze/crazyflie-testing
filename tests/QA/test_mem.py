@@ -27,10 +27,6 @@ class TestMem:
             read_mems.append(mem.elements['Board name'])
             update_event.set()
 
-
-        if not test_setup.device.decks:
-            pytest.skip('no decks on device')
-
         assert test_setup.device.connect_sync()
         mems = test_setup.device.cf.mem.get_mems(MemoryElement.TYPE_1W)
         assert len(mems) == len(test_setup.device.decks)
