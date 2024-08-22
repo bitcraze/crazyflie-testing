@@ -43,7 +43,7 @@ class TestDecks:
 
 
 
-    @pytest.mark.decks("bcDWM1000")
+    @pytest.mark.decks("bcLoco")
     def test_loco_deck_loop_is_running(self, test_setup: conftest.DeviceFixture):
         '''
         Check that the event loop in the loco deck driver is running, this is indicated by read and writes to the SPI
