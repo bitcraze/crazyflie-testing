@@ -77,7 +77,7 @@ jobs:
     runs-on: [self-hosted, linux]
     strategy:
       matrix:
-        python_version: ["3.8","3.9", "3.10", "3.11"]
+        python_version: ["3.8","3.9", "3.10", "3.11","3.12"]
       fail-fast: false
     env:
       TEST_FILE: Linux_sanity_test_job-${{github.run_number}}-${{ matrix.python_version }}
@@ -86,7 +86,7 @@ jobs:
       PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     container:
-      image: python:${{ matrix.python_version }}-buster
+      image: python:${{ matrix.python_version }}-bullseye
       options: --privileged
     steps:
     - name: Upgrade pip
