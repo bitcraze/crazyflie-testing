@@ -20,6 +20,8 @@ import numpy as np
 import cflib.crtp
 from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
+import asyncio
+from bleak import BleakScanner
 
 import conftest
 import logging
@@ -28,6 +30,25 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.sanity
 class TestRadio:
+
+    async def scan(self):
+        print("scanning for 5 seconds, please wait...")
+
+        devices = await BleakScanner.discover(),
+
+        if devices:
+            return devices[0]
+
+    def test_bt_name_change(self, dev: conftest.BCDevice):
+        devices = asyncio.run(self.scan())
+        one_found = False
+        if devices:
+            for device in devices:
+                if device.name.startswith("Crazyflie-"):
+                    assert device.name == (f'Crazyflie-{device.address.replace(":", "")[6:]}'), "Device name and address do not match {device.name} and {device.address}"
+                    one_found=True #We should always find at least one to see that this is correct
+        assert one_found, "No Crazyflie found"
+
     def test_latency_small_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.latencysmall')
         assert(latency(dev.link_uri, requirement['packet_size']) < requirement['limit_high_ms'])
