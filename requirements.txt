@@ -1,2 +1,4 @@
 toml
 pytest-html
+asyncio
+bleak
