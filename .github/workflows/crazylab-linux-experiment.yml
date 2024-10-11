@@ -31,13 +31,18 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 120
     container:
-      image: python:3.9.7-buster
+      image: python:3.11-buster
       options: --privileged
     steps:
       - name: Install libusb
         run: |
           apt update
           apt install -y libusb-1.0-0 uhubctl
+      - name: Install necessary dependencies for BLE and D-Bus
+        run: |
+          apt-get update
+          apt-get install -y dbus bluez libdbus-1-dev libdbus-glib-1-dev libbluetooth-dev python3-dbus
+          service dbus start
 
       - name: Upgrade pip
         run:  |
