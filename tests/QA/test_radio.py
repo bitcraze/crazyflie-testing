@@ -21,7 +21,7 @@ import cflib.crtp
 from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
 import asyncio
-from bleak import BleakScanner
+from bleak import BleakScanner, BleakClient
 
 import conftest
 import logging
@@ -31,16 +31,24 @@ logger = logging.getLogger(__name__)
 @pytest.mark.sanity
 class TestRadio:
 
-    async def scan(self):
+    async def scan_ble(self):
         print("scanning for 5 seconds, please wait...")
-
         devices = await BleakScanner.discover(),
-
         if devices:
             return devices[0]
 
-    def test_bt_name_change(self, dev: conftest.BCDevice):
-        devices = asyncio.run(self.scan())
+    async def connect_ble_device(self, device_address):
+        print(f"Connecting to device with address {device_address}...")
+        async with BleakClient(device_address) as client:
+            if client.is_connected:
+                services = await client.get_services()
+                assert  services != None,  "No services found" #Just double check that we can actually read over the connection
+                return True
+            else:
+                return False
+
+    def test_bt_name(self, dev: conftest.BCDevice):
+        devices = asyncio.run(self.scan_ble())
         one_found = False
         if devices:
             for device in devices:
@@ -48,6 +56,13 @@ class TestRadio:
                     assert device.name == (f'Crazyflie-{device.address.replace(":", "")[6:]}'), "Device name and address do not match {device.name} and {device.address}"
                     one_found=True #We should always find at least one to see that this is correct
         assert one_found, "No Crazyflie found"
+
+    def test_bt_connection(self, dev: conftest.BCDevice):
+        name = ':'.join(dev.mac_address[i:i+2] for i in range(0, len(dev.mac_address), 2))
+        connected = asyncio.run(self.connect_ble_device(name))
+        assert connected, "Could not connect to Crazyflie"
+
+
 
     def test_latency_small_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.latencysmall')

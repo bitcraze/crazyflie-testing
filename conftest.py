@@ -13,6 +13,7 @@ import subprocess
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from threading import Event
 from typing import Callable, List, NoReturn, Optional
+import re
 
 import cflib
 from cflib.bootloader import Bootloader, Cloader, Target
@@ -75,13 +76,14 @@ class BCDevice:
 
         self.name = name
         self.link_uri = device['radio']
-
         self.usb_power_control = self._parse_usb_power_control(device)
 
         try:
             self.bl_link_uri = device['bootloader_radio']
+            self.mac_address = re.search(r'/([A-F0-9]{8,12})(\?|$)', self.bl_link_uri).group(1)
         except KeyError:
             self.bl_link_uri = None
+            self.mac_address = None
             pass
 
         self.decks = []
