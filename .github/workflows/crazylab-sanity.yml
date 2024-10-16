@@ -23,7 +23,7 @@ jobs:
     runs-on: [self-hosted, macOS]
     strategy:
       matrix:
-        python_version: ["3.9", "3.10", "3.11", "3.12"]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
     env:
       TEST_FILE: Mac__sanity_test_job-${{github.run_number}}-${{ matrix.python_version }}
@@ -77,7 +77,7 @@ jobs:
     runs-on: [self-hosted, linux]
     strategy:
       matrix:
-        python_version: ["3.8","3.9", "3.10", "3.11","3.12"]
+        python_version: ["3.10", "3.11","3.12", "3.13"]
       fail-fast: false
     env:
       TEST_FILE: Linux_sanity_test_job-${{github.run_number}}-${{ matrix.python_version }}
