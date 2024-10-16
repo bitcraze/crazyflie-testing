@@ -86,7 +86,7 @@ jobs:
       PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     container:
-      image: python:${{ matrix.python_version }}-bullseye
+      image: python:${{ matrix.python_version }}-bookworm
       options: --privileged
     steps:
     - name: Upgrade pip

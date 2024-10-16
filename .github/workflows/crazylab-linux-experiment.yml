@@ -31,7 +31,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 120
     container:
-      image: python:3.9.7-buster
+      image: python:3.13.0-bookworm
       options: --privileged
     steps:
       - name: Install libusb
