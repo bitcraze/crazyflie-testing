@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 120
     container:
       image: python:3.13.0-bookworm
-      options: --privileged
+      options: --privileged --init
     env:
       CRAZY_SITE: crazylab-malmö
       TEST_FILE: TestRun-${{github.run_number}}
