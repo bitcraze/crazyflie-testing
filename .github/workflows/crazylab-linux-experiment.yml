@@ -87,7 +87,7 @@ jobs:
             pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml
           fi
       - name: Upload test file
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: warn
@@ -98,7 +98,7 @@ jobs:
             assets/style.css
 
       - name: Pretty print test results
-        if: always()
+        if: ${{ !cancelled() }}
         uses: pmeier/pytest-results-action@main
         with:
           path: ${{env.TEST_FILE}}.xml

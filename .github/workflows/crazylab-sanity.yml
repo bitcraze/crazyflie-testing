@@ -53,7 +53,7 @@ jobs:
         run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
 
       - name: Upload test file
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{env.TEST_FILE}}_results
@@ -64,7 +64,7 @@ jobs:
             assets/style.css
 
       - name: Pretty print test results
-        if: always()
+        if: ${{ !cancelled() }}
         uses: pmeier/pytest-results-action@main
         with:
           path: ${{env.TEST_FILE}}.xml
@@ -72,7 +72,7 @@ jobs:
           title: Test results
 
   sanity_testsuite_on_linux:
-    if: always()
+    if: ${{ !cancelled() }}
     needs: [sanity_testsuite_on_mac]
     runs-on: [self-hosted, linux]
     strategy:
@@ -126,7 +126,7 @@ jobs:
       run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
 
     - name: Upload test file
-      if: always()
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{env.TEST_FILE}}_results
@@ -137,7 +137,7 @@ jobs:
           assets/style.css
 
     - name: Pretty print test results
-      if: always()
+      if: ${{ !cancelled() }}
       uses: pmeier/pytest-results-action@main
       with:
         path: ${{env.TEST_FILE}}.xml
