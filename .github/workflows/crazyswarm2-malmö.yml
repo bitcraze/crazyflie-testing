@@ -3,8 +3,6 @@ name: Crazyswarm2 test 🐝
 # Controls when the action will run.
 on:
   workflow_dispatch:
-  schedule:
-  - cron:  '0 4 * * *'
 
 jobs:
   cs2_at_crazylab:
