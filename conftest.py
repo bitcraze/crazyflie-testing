@@ -305,6 +305,7 @@ def get_devices(has_decks: List[str]=[], has_properties: List[str]=[], exclude_d
 
     site = os.getenv('CRAZY_SITE') or DEFAULT_SITE
     devicenames = os.getenv('CRAZY_DEVICE')
+    print(f'Using site {site}')
     if site is None:
         raise Exception('No CRAZY_SITE env specified!')
     if devicenames is not None and devicenames != '':
@@ -323,6 +324,7 @@ def get_devices(has_decks: List[str]=[], has_properties: List[str]=[], exclude_d
                 all(deck not in dev.decks for deck in exclude_decks)
             ]
             if all(conditions):
+                    print(f'Adding device {name} to test')
                     devices.append(dev)
     except Exception:
         raise Exception(f'Failed to parse toml {path}!')
