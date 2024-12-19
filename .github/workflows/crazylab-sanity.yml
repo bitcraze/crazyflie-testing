@@ -8,7 +8,7 @@ on:
 jobs:
   #TODO add flashing of crazyflies
   setup_mac:
-    runs-on: [self-hosted, macOS]
+    runs-on: [lab-mac]
     steps:
       - name: Check out sources
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
 
   sanity_testsuite_on_mac:
     needs: [setup_mac]
-    runs-on: [self-hosted, macOS]
+    runs-on: [lab-mac]
     strategy:
       matrix:
         python_version: ["3.10", "3.11", "3.12", "3.13"]
