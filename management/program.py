@@ -24,8 +24,7 @@ import sys
 from recover import recover
 
 # Timeout for the program operation.
-TIMEOUT = 10 * 60
-
+TIMEOUT = 10 * 60 *2 # 20 min
 #
 # This is to make it possible to import from conftest
 #
