@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.sanity
 class TestRadio:
-    def test_latency_small_packets(self, dev: conftest.BCDevice):
+    def test_latency(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.latency')
         assert(latency(dev.link_uri, dev.cf) < requirement['limit_high_ms'])
 
