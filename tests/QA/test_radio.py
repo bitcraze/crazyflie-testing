@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class TestRadio:
     def test_latency_small_packets(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.latency')
-        assert(latency(dev.link_uri) < requirement['limit_high_ms'])
+        assert(latency(dev.link_uri, dev.cf) < requirement['limit_high_ms'])
 
     @pytest.mark.requirements("syslink_flowctrl")
     def test_bandwidth_small_packets(self, dev: conftest.BCDevice):
@@ -49,12 +49,13 @@ class TestRadio:
         bandwidth(dev.link_uri, 4, requirement['limit_low'])
 
 
-def latency(uri, timeout=10):
+def latency(uri, cf, timeout=10):
     """
     Retrieve the latency to a Crazyflie.
 
     Args:
         uri (str): The URI of the Crazyflie.
+        cf (Crazyflie): The Crazyflie instance to retrieve the latency from.
         timeout (float): Maximum time to wait for latency updates.
 
     Returns:
@@ -63,7 +64,7 @@ def latency(uri, timeout=10):
     Raises:
         TimeoutError: If the timeout is reached during latency retrieval.
     """
-    with ValidatedSyncCrazyflie(uri) as scf:
+    with ValidatedSyncCrazyflie(uri, cf) as scf:
         syncer = Syncer()
 
         def on_latency_update(latency):
