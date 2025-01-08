@@ -6,8 +6,7 @@ Contents
 ========
 
 * [Radio](#radio)
-	* [latencysmall](#latencysmall)
-	* [latencybig](#latencybig)
+	* [latency](#latency)
 	* [bwsmall](#bwsmall)
 	* [bwbig](#bwbig)
 	* [reliability](#reliability)
@@ -20,24 +19,13 @@ Contents
 
 
 These requirements targets the low level radio communication.
-## latencysmall
+## latency
 
 
-Link round-trip latency for small radio packets (4 bytes)
+Link round-trip latency for radio packets
 |Field|Value|
 | :--- | :--- |
 |limit_high_ms|8|
-|packet_size|4|
-|rational|Empirical|
-
-## latencybig
-
-
-Link round-trip latency for small radio packets (28 bytes)
-|Field|Value|
-| :--- | :--- |
-|limit_high_ms|8|
-|packet_size|28|
 |rational|Empirical|
 
 ## bwsmall
