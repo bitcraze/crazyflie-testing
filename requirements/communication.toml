@@ -1,16 +1,9 @@
 [requirement.radio]
 description = "These requirements targets the low level radio communication."
 
-[requirement.radio.latencysmall]
-description = "Link round-trip latency for small radio packets (4 bytes)"
+[requirement.radio.latency]
+description = "Link round-trip latency for radio packets"
 rational = "Empirical"
-packet_size = 4
-limit_high_ms = 8
-
-[requirement.radio.latencybig]
-description = "Link round-trip latency for small radio packets (28 bytes)"
-rational = "Empirical"
-packet_size = 28
 limit_high_ms = 8
 
 [requirement.radio.bwsmall]
