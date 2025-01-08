@@ -65,6 +65,8 @@ def latency(uri, cf, timeout=10):
         TimeoutError: If the timeout is reached during latency retrieval.
     """
     with ValidatedSyncCrazyflie(uri, cf) as scf:
+        time.sleep(10)  # wait 10 seconds for the p95 latency to converge
+
         syncer = Syncer()
 
         def on_latency_update(latency):
