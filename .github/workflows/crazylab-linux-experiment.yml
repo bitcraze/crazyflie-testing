@@ -67,6 +67,7 @@ jobs:
         with:
           repo: bitcraze/crazyflie-release
           workflow: ${{env.FW_ACTION}}.yml
+          path: ${{env.FW_ACTION}}/
         uses: dawidd6/action-download-artifact@v4
 
       - name: Reset power to all devices
@@ -74,7 +75,7 @@ jobs:
 
 
       - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file cf2-${{env.FW_ACTION}}/firmware-cf2-${{env.FW_ACTION}}.zip
+        run: python3 management/program.py --file nightly/
       - name: Run test suite
         env:
           FILTER: ${{ github.event.inputs.filter || '""'}}
