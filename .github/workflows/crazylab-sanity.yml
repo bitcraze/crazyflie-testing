@@ -74,7 +74,6 @@ jobs:
 
   sanity_testsuite_on_linux:
     if: ${{ !cancelled() }}
-    needs: [sanity_testsuite_on_mac]
     runs-on: [self-hosted, linux]
     strategy:
       matrix:
@@ -83,7 +82,7 @@ jobs:
     env:
       TEST_FILE: Linux_sanity_test_job-${{github.run_number}}-${{ matrix.python_version }}
       CRAZY_SITE: crazylab-malmö
-      CRAZY_DEVICE: cf21_stock
+      CRAZY_DEVICE: cf21_stock,cf21bl_stock
       PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     container:
@@ -115,6 +114,7 @@ jobs:
       with:
         repo: bitcraze/crazyflie-release
         workflow: nightly.yml
+        path: nightly
       uses: dawidd6/action-download-artifact@v4
 
     - name: Reset power to all devices
