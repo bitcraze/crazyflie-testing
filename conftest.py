@@ -86,6 +86,10 @@ class BCDevice:
 
         self.decks = []
         self.properties = []
+        if 'platform' in device:
+            self.platform = device['platform']
+        else :
+            self.platform = "cf21"
         if 'decks' in device:
             if all(deck in ALL_DECKS for deck in device['decks']):
                 self.decks = device['decks']
@@ -164,6 +168,7 @@ class BCDevice:
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                                enable_console_log=True, warm=False)
             except Exception as e:
+                print(self.cf)
                 print('Failed cold flash (as expected), trying warm flash')
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=True)
