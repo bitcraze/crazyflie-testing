@@ -58,10 +58,10 @@ def progress_cb(msg: str, percent: int):
     current_frame += 1
 
 def get_correct_zip(fw_dir: Path, dev: BCDevice) -> Path:
-    for dir in fw_dir.iterdir():
-        if dev.platform in dir.name:
-            return Path(f'{dir.name}/{dir.name}.zip')
-    return Path("cf2-nigtly/cf2-nightly.zip")
+    target_dir = fw_dir / f"{dev.platform}-nightly"
+    if target_dir.exists():
+        return target_dir / f"firmware-{target_dir.name}.zip"
+    return Path("nightly") / "cf2-nightly" / "firmware-cf2-nightly.zip"
 
 def program(fw_zip: Path, retries=0) -> bool:
     # Setup the alarm handler and ask the OS to send a SIGALRM to the process after TIMEOUT seconds
@@ -72,7 +72,6 @@ def program(fw_zip: Path, retries=0) -> bool:
                 signal.alarm(TIMEOUT)
                 print('Programming device: {}'.format(dev))
                 zip = get_correct_zip(fw_zip, dev)
-                print('Using firmware: {}'.format(zip))
                 dev.flash(zip, progress_cb)
                 signal.alarm(0)
                 break
