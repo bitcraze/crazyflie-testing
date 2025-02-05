@@ -16,6 +16,7 @@ jobs:
         with:
           repo: bitcraze/crazyflie-release
           workflow: nightly.yml
+          path: nightly
         uses: dawidd6/action-download-artifact@v4
 
   sanity_testsuite_on_mac:
@@ -47,7 +48,7 @@ jobs:
           venv/bin/pip install -r requirements.txt
 
       - name: Upgrade devices to latest firmware
-        run: venv/bin/python management/program.py --file cf2-nightly/firmware-cf2-nightly.zip --retries 3
+        run: venv/bin/python management/program.py --file nightly --retries 3
 
       - name: Run test suite
         run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
