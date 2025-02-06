@@ -16,6 +16,7 @@ jobs:
         with:
           repo: bitcraze/crazyflie-release
           workflow: nightly.yml
+          path: nightly
         uses: dawidd6/action-download-artifact@v4
 
   sanity_testsuite_on_mac:
@@ -47,7 +48,7 @@ jobs:
           venv/bin/pip install -r requirements.txt
 
       - name: Upgrade devices to latest firmware
-        run: venv/bin/python management/program.py --file cf2-nightly/firmware-cf2-nightly.zip --retries 3
+        run: venv/bin/python management/program.py --file nightly/ --retries 3
 
       - name: Run test suite
         run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
@@ -73,8 +74,8 @@ jobs:
 
   sanity_testsuite_on_linux:
     if: ${{ !cancelled() }}
-    needs: [sanity_testsuite_on_mac]
     runs-on: [self-hosted, linux]
+    needs: [sanity_testsuite_on_mac]
     strategy:
       matrix:
         python_version: ["3.10", "3.11","3.12", "3.13"]
@@ -82,7 +83,7 @@ jobs:
     env:
       TEST_FILE: Linux_sanity_test_job-${{github.run_number}}-${{ matrix.python_version }}
       CRAZY_SITE: crazylab-malmö
-      CRAZY_DEVICE: cf21_stock
+      CRAZY_DEVICE: cf21_stock,cf21bl_stock
       PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     container:
@@ -114,13 +115,14 @@ jobs:
       with:
         repo: bitcraze/crazyflie-release
         workflow: nightly.yml
+        path: nightly
       uses: dawidd6/action-download-artifact@v4
 
     - name: Reset power to all devices
       run: python3 management/usb-power-reset.py -a reset
 
     - name: Upgrade devices to latest firmware
-      run: python3 management/program.py --file cf2-nightly/firmware-cf2-nightly.zip --retries 3
+      run: python3 management/program.py --file nightly/ --retries 3
 
     - name: Run test suite
       run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA

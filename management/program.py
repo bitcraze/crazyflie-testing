@@ -22,6 +22,7 @@ import threading
 import signal
 import sys
 from recover import recover
+from conftest import BCDevice
 
 # Timeout for the program operation.
 TIMEOUT = 10 * 60 *2 # 20 min
@@ -56,17 +57,28 @@ def progress_cb(msg: str, percent: int):
     print('{} {}% {}'.format(frame, percent, msg), end='\r')
     current_frame += 1
 
+def get_correct_zip(fw_dir: Path, dev: BCDevice) -> Path:
+    if "experiment" in fw_dir.name:
+        target_dir = fw_dir / f"{dev.platform}-nightly-experiment"
+        if target_dir.exists():
+            return target_dir / f"firmware-{target_dir.name}-experiment.zip"
+        return Path("nightly") / "cf2-nightly-experiment" / "firmware-cf2-nightly-experiment.zip"
+    else:
+        target_dir = fw_dir / f"{dev.platform}-nightly"
+        if target_dir.exists():
+            return target_dir / f"firmware-{target_dir.name}.zip"
+        return Path("nightly") / "cf2-nightly" / "firmware-cf2-nightly.zip"
 
-def program(fw_file: Path, retries=0) -> bool:
+def program(fw_zip: Path, retries=0) -> bool:
     # Setup the alarm handler and ask the OS to send a SIGALRM to the process after TIMEOUT seconds
     signal.signal(signal.SIGALRM, alarm_handler)
-
     for dev in get_devices():
         while True:
             try:
                 signal.alarm(TIMEOUT)
                 print('Programming device: {}'.format(dev))
-                dev.flash(fw_file, progress_cb)
+                zip = get_correct_zip(fw_zip, dev)
+                dev.flash(zip, progress_cb)
                 signal.alarm(0)
                 break
             except Exception as err:

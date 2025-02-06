@@ -42,13 +42,14 @@ jobs:
         with:
           repo: bitcraze/crazyflie-release
           workflow: nightly.yml
+          path: nightly
         uses: dawidd6/action-download-artifact@v4
 
       - name: Reset power to all devices
         run: python3 management/usb-power-reset.py -a reset
 
       - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file cf2-nightly/firmware-cf2-nightly.zip
+        run: python3 management/program.py --file nightly/
 
       - name: Run test suite
         run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml tests/QA
