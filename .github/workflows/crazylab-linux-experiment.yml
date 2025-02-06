@@ -75,7 +75,7 @@ jobs:
 
 
       - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file nightly/
+        run: python3 management/program.py --file ${{env.FW_ACTION}}/
       - name: Run test suite
         env:
           FILTER: ${{ github.event.inputs.filter || '""'}}
