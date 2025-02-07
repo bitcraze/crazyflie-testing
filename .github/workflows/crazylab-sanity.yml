@@ -38,7 +38,9 @@ jobs:
           source venv/bin/activate
 
       - name: Install pytest
-        run: venv/bin/pip install pytest
+        run: |
+            venv/bin/pip install pytest
+            venv/bin/pip install pytest-timeout
 
       - name: Install Crazyflie python library
         run: venv/bin/pip install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
@@ -100,7 +102,9 @@ jobs:
         apt install -y libusb-1.0-0 uhubctl
 
     - name: Install pytest
-      run: pip3 install pytest
+      run: | 
+        pip3 install pytest
+        pip install pytest-timeout
 
     - name: Install Crazyflie python library
       run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master

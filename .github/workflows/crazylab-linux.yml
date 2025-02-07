@@ -27,7 +27,9 @@ jobs:
           pip3 install --upgrade pip
 
       - name: Install pytest
-        run: pip3 install pytest
+        run: | 
+          pip3 install pytest
+          pip3 install pytest-timeout
 
       - name: Install Crazyflie python library
         run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
