@@ -3,11 +3,11 @@
 
 const int RELAYS[] = {2};
 const int N_RELAYS = sizeof(RELAYS)/sizeof(RELAYS[0]);
-int relayStates[N_RELAYS] = {0,};
+int relayStates[N_RELAYS] = {1,};
 
 const int OUTS[] = {8};
 const int N_OUTS = sizeof(OUTS)/sizeof(OUTS[0]);
-int outsStates[N_OUTS] = {0,};
+int outsStates[N_OUTS] = {1,};
 
 SCPI_Parser my_instrument;
 
@@ -25,11 +25,15 @@ void setup() {
   Serial.begin(9600);
 
   for (int i=0; i<N_RELAYS; i++) {
+    Serial.println("hello\n");
     pinMode(RELAYS[i], OUTPUT);
+    digitalWrite(RELAYS[i],relayStates[i]);
   }
 
   for (int i=0; i<N_OUTS; i++) {
     pinMode(OUTS[i], OUTPUT);
+    digitalWrite(OUTS[i],outsStates[i]);
+    
   }
 }
 
