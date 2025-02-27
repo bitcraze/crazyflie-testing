@@ -79,7 +79,7 @@ class BCDevice:
         self.link_uri = device['radio']
 
         self.usb_power_control = self._parse_usb_power_control(device)
-
+        self.power_manager = None
         try:
             self.bl_link_uri = device['bootloader_radio']
         except KeyError:
