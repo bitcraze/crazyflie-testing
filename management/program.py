@@ -103,4 +103,8 @@ if __name__ == "__main__":
     p = parser.parse_args()
 
     if not program(p.file,p.retries):
+        print('Failed to program devices', file=sys.stderr)
         sys.exit(1)
+    else:
+        print('Devices programmed successfully')
+        sys.exit(0)

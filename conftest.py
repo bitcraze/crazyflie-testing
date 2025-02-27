@@ -21,6 +21,8 @@ from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
 from cflib.utils.power_switch import PowerSwitch
 
+from management.arduino_power_manager import PowerManager
+
 DIR = os.path.dirname(os.path.realpath(__file__))
 SITE_PATH = os.path.join(DIR, 'sites/')
 REQUIREMENT = os.path.join(DIR, 'requirements/')
@@ -97,6 +99,8 @@ class BCDevice:
                 raise Exception(f'Invalid decks in deck list of {self.name}: {device["decks"]}')
         if 'properties' in device:
             self.properties = device['properties']
+        if 'power_manager_port' in device:
+            self.power_manager = PowerManager(device['power_manager_port'])
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -140,6 +144,8 @@ class BCDevice:
         return False
 
     def reboot(self):
+        if self.power_manager is not None:
+            self.power_manager.restart()
         switch = PowerSwitch(self.link_uri)
         switch.stm_power_cycle()
 
@@ -157,6 +163,14 @@ class BCDevice:
 
         return status
 
+    def goto_bootloader(self):
+        self.bl.close()
+        self.bl = Bootloader(self.link_uri)
+        if self.power_manager is not None:
+            print('Resetting to bootloader')
+            self.power_manager.bootloader()
+            time.sleep(2)
+
     def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None) -> bool:
         try:
             if path.name.endswith(".bin"):
@@ -164,15 +178,17 @@ class BCDevice:
             else:
                 targets = []
             try:
-                print('Trying cold flash', targets)
-                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
-                               enable_console_log=True, warm=False)
-            except Exception as e:
-                print('Failed cold flash (as expected), trying warm flash')
+                self.reboot()
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=True)
+            except Exception as e:
+                self.goto_bootloader()
+                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
+                    enable_console_log=True, warm=False)
+                self.reboot()
         finally:
             self.bl.close()
+            self.bl = Bootloader(self.link_uri)
 
     def connect_sync(self, querystring=None):
         self.cf.close_link()
