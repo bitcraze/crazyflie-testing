@@ -158,9 +158,7 @@ class BCDevice:
         link.close()
         return False
 
-    def reboot(self, rig_manager:RigManager):
-        if self.power_manager is not None and rig_manager is not None:
-           rig_manager.restart(self.power_manager)
+    def reboot(self):
         switch = PowerSwitch(self.link_uri)
         switch.stm_power_cycle()
 
@@ -178,7 +176,11 @@ class BCDevice:
 
         return status
 
-    def goto_bootloader(self, rig_manager: RigManager):
+    def power_cycle(self, rig_manager:RigManager=None):
+        if self.power_manager is not None and rig_manager is not None:
+           rig_manager.restart(self.power_manager)
+
+    def goto_bootloader(self, rig_manager: RigManager=None):
         self.bl.close()
         self.bl = Bootloader(self.link_uri)
         if self.power_manager is not None and rig_manager is not None:
@@ -194,7 +196,7 @@ class BCDevice:
             else:
                 targets = []
             try:
-                self.reboot(rig_manager)
+                self.power_cycle(rig_manager)
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=True)
             except Exception as e:
@@ -202,7 +204,7 @@ class BCDevice:
                 self.goto_bootloader(rig_manager)
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=False)
-                self.reboot(rig_manager)
+                self.power_cycle(rig_manager)
         finally:
             self.bl.close()
             self.bl = Bootloader(self.link_uri)
