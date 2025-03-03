@@ -62,6 +62,21 @@ def pytest_collection_modifyitems(config, items):
     items[:] = selected
     config.hook.pytest_deselected(items=deselected)
 
+def get_rig_manager():
+    site = os.getenv('CRAZY_SITE') or DEFAULT_SITE
+    print(f'Using site {site}')
+    if site is None:
+        raise Exception('No CRAZY_SITE env specified!')
+    path = os.path.join(SITE_PATH, '%s.toml' % site)
+    site_t = toml.load(open(path, 'r'))
+    try:
+        addr = site_t['rig_management']
+        return RigManager(addr)
+    except KeyError:
+        print("No rig manager for site")
+        return None
+
+
 class USB_Power_Control_Action(str, Enum):
     ON     = 'on'
     OFF    = 'off'
@@ -99,8 +114,8 @@ class BCDevice:
                 raise Exception(f'Invalid decks in deck list of {self.name}: {device["decks"]}')
         if 'properties' in device:
             self.properties = device['properties']
-        if 'rig_mamagement' in device:
-            self.power_manager = RigManager(device['rig_management'].split(':')[0], int(device['rig_management'].split(':')[1]))
+        if 'rig_management_addr' in device:
+            self.power_manager = device['rig_management_addr']
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -143,9 +158,9 @@ class BCDevice:
         link.close()
         return False
 
-    def reboot(self):
-        if self.power_manager is not None:
-            self.power_manager.restart()
+    def reboot(self, rig_manager:RigManager):
+        if self.power_manager is not None and rig_manager is not None:
+           rig_manager.restart(self.power_manager)
         switch = PowerSwitch(self.link_uri)
         switch.stm_power_cycle()
 
@@ -163,37 +178,32 @@ class BCDevice:
 
         return status
 
-    def goto_bootloader(self):
+    def goto_bootloader(self, rig_manager: RigManager):
         self.bl.close()
         self.bl = Bootloader(self.link_uri)
-        if self.power_manager is not None:
+        if self.power_manager is not None and rig_manager is not None:
             print('Resetting to bootloader')
-            self.power_manager.bootloader()
+            rig_manager.bootloader(self.power_manager)
             time.sleep(2)
 
-    def close_power_manager(self):
-        if self.power_manager is not None:
-            self.power_manager.close()
-            self.power_manager = None
 
-    def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None) -> bool:
+    def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None, rig_manager:RigManager = None) -> bool:
         try:
             if path.name.endswith(".bin"):
                 targets = [Target('cf2', 'stm32', 'fw', [], [])]
             else:
                 targets = []
             try:
-                self.reboot()
+                self.reboot(rig_manager)
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=True)
             except Exception as e:
                 print(f'Failed to flash {path} to {self.name}. Resetting to bootloader and trying again')
-                self.goto_bootloader()
+                self.goto_bootloader(rig_manager)
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=False)
-                self.reboot()
+                self.reboot(rig_manager)
         finally:
-            self.close_power_manager()
             self.bl.close()
             self.bl = Bootloader(self.link_uri)
 

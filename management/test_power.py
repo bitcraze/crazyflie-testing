@@ -19,12 +19,14 @@ class RigManager:
 if __name__ == "__main__":
     import time
 
-    rig_manager = RigManager("/dev/ttyACM1")
+    rig_manager = RigManager("/dev/tty.usbmodemF412FA6372CC2")
+    if rig_manager is None:
+        raise Exception
 
     # Reset Crazyflie to bootloader mode
-    rig_manager.set_power(0, False)
+    rig_manager._set_power(0, False)
     time.sleep(1)
-    rig_manager.set_button(0, True)
-    rig_manager.set_power(0, True)
+    rig_manager._set_button(0, True)
+    rig_manager._set_power(0, True)
     time.sleep(2.5)
-    rig_manager.set_button(0, False)
+    rig_manager._set_button(0, False)
