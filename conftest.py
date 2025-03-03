@@ -100,7 +100,7 @@ class BCDevice:
         if 'properties' in device:
             self.properties = device['properties']
         if 'rig_mamagement' in device:
-            self.power_manager = RigManager(device['rig_mamagement'].split(':')[0], int(device['rig_mamagement'].split(':')[1]))
+            self.power_manager = RigManager(device['rig_management'].split(':')[0], int(device['rig_management'].split(':')[1]))
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
