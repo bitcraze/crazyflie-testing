@@ -1,4 +1,3 @@
 toml
 pytest-html
-pyvisa-py
-easy_scpi
+pyserial
