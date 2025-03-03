@@ -21,7 +21,7 @@ from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
 from cflib.utils.power_switch import PowerSwitch
 
-from management.arduino_power_manager import PowerManager
+from management.arduino_power_manager import RigManager
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 SITE_PATH = os.path.join(DIR, 'sites/')
@@ -99,8 +99,8 @@ class BCDevice:
                 raise Exception(f'Invalid decks in deck list of {self.name}: {device["decks"]}')
         if 'properties' in device:
             self.properties = device['properties']
-        if 'power_manager_port' in device:
-            self.power_manager = PowerManager(device['power_manager_port'])
+        if 'rig_mamagement' in device:
+            self.power_manager = RigManager(device['rig_mamagement'].split(':')[0], int(device['rig_mamagement'].split(':')[1]))
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -171,6 +171,11 @@ class BCDevice:
             self.power_manager.bootloader()
             time.sleep(2)
 
+    def close_power_manager(self):
+        if self.power_manager is not None:
+            self.power_manager.close()
+            self.power_manager = None
+
     def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None) -> bool:
         try:
             if path.name.endswith(".bin"):
@@ -182,11 +187,13 @@ class BCDevice:
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=True)
             except Exception as e:
+                print(f'Failed to flash {path} to {self.name}. Resetting to bootloader and trying again')
                 self.goto_bootloader()
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=False)
                 self.reboot()
         finally:
+            self.close_power_manager()
             self.bl.close()
             self.bl = Bootloader(self.link_uri)
 

@@ -1,38 +1,43 @@
-import easy_scpi as scpi
+import  serial
 import time
 
-class PowerManager():
-    def __init__(self, port: str) -> None:
-        if port is None:
-            raise ValueError('Port cannot be None.')
-        self.port = f'ASRL{port}::INSTR'
-        self.inst = scpi.Instrument(self.port,  read_termination='\r\n',  write_termination='\n')
-        
+class RigManager:
+    def __init__(self, port, address = 0):
+        self.instrument = serial.Serial(port, 9600)
+        self.address = address
 
-    def power_on(self) -> None:
-        self.inst.connect()
-        self.inst.system.relay0(1)
-        self.inst.disconnect()
+    def _set_power(self, output: int, state: bool):
+        command = f"system:relay{output} {1 if state else 0}\n"
+        print(command)
+        self.instrument.write(command.encode('utf-8'))
 
-    def power_off(self) -> None:
-        self.inst.connect()
-        self.inst.system.relay0(0)
-        self.inst.disconnect()
+    def _set_button(self, output: int, state: bool):
+        command = f"system:do{output} {1 if state else 0}\n"
+        print(command)
+        self.instrument.write(command.encode('utf-8'))
+
 
     def restart(self) -> None:
-        self.inst.connect()
-        self.inst.system.do0(1)
-        self.inst.system.relay0(0)
-        time.sleep(2)
-        self.inst.system.relay0(1)
+        self._set_button(self.address, True)
+        self._set_power(self.address, False)
+        time.sleep(1)
+        self._set_power(self.address, True)
 
     def bootloader(self) -> None:
-        self.inst.connect()
-        self.inst.system.do0(1)
-        self.inst.system.relay0(0)
+        self._set_power(self.address, False)
         time.sleep(1)
-        self.inst.system.do0(0)
-        self.inst.system.relay0(1)
-        time.sleep(2)
-        self.inst.system.do0(1)
-        self.inst.disconnect()
+        self._set_button(self.address, False)
+        self._set_power(self.address, True)
+        time.sleep(2.5)
+        self._set_button(self.address, True)
+
+    def close(self):
+        self.instrument.close()
+
+# Test code
+if __name__ == "__main__":
+    import time
+
+    rig_manager = RigManager("/dev/ttyACM1")
+
+    rig_manager.restart()
