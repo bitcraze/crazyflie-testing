@@ -33,7 +33,7 @@ currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.join(currentdir, '..')
 sys.path.append(parentdir)
 
-from conftest import get_devices  # noqa
+from conftest import get_devices,get_rig_manager  # noqa
 
 logger = logging.getLogger(__name__)
 
@@ -72,13 +72,15 @@ def get_correct_zip(fw_dir: Path, dev: BCDevice) -> Path:
 def program(fw_zip: Path, retries=0) -> bool:
     # Setup the alarm handler and ask the OS to send a SIGALRM to the process after TIMEOUT seconds
     signal.signal(signal.SIGALRM, alarm_handler)
+    rig_manager = get_rig_manager()
+    print(rig_manager)
     for dev in get_devices():
         while True:
             try:
                 signal.alarm(TIMEOUT)
                 print('Programming device: {}'.format(dev))
                 zip = get_correct_zip(fw_zip, dev)
-                dev.flash(zip, progress_cb)
+                dev.flash(zip, progress_cb, rig_manager)
                 signal.alarm(0)
                 break
             except Exception as err:
@@ -103,4 +105,8 @@ if __name__ == "__main__":
     p = parser.parse_args()
 
     if not program(p.file,p.retries):
+        print('Failed to program devices', file=sys.stderr)
         sys.exit(1)
+    else:
+        print('Devices programmed successfully')
+        sys.exit(0)

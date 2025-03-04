@@ -21,6 +21,8 @@ from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
 from cflib.utils.power_switch import PowerSwitch
 
+from management.arduino_power_manager import RigManager
+
 DIR = os.path.dirname(os.path.realpath(__file__))
 SITE_PATH = os.path.join(DIR, 'sites/')
 REQUIREMENT = os.path.join(DIR, 'requirements/')
@@ -60,6 +62,21 @@ def pytest_collection_modifyitems(config, items):
     items[:] = selected
     config.hook.pytest_deselected(items=deselected)
 
+def get_rig_manager():
+    site = os.getenv('CRAZY_SITE') or DEFAULT_SITE
+    print(f'Using site {site}')
+    if site is None:
+        raise Exception('No CRAZY_SITE env specified!')
+    path = os.path.join(SITE_PATH, '%s.toml' % site)
+    site_t = toml.load(open(path, 'r'))
+    try:
+        addr = site_t['rig_management']
+        return RigManager(addr)
+    except KeyError:
+        print("No rig manager for site")
+        return None
+
+
 class USB_Power_Control_Action(str, Enum):
     ON     = 'on'
     OFF    = 'off'
@@ -77,7 +94,7 @@ class BCDevice:
         self.link_uri = device['radio']
 
         self.usb_power_control = self._parse_usb_power_control(device)
-
+        self.power_manager = None
         try:
             self.bl_link_uri = device['bootloader_radio']
         except KeyError:
@@ -97,6 +114,8 @@ class BCDevice:
                 raise Exception(f'Invalid decks in deck list of {self.name}: {device["decks"]}')
         if 'properties' in device:
             self.properties = device['properties']
+        if 'rig_management_addr' in device:
+            self.power_manager = device['rig_management_addr']
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -157,22 +176,38 @@ class BCDevice:
 
         return status
 
-    def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None) -> bool:
+    def power_cycle(self, rig_manager:RigManager=None):
+        if self.power_manager is not None and rig_manager is not None:
+           rig_manager.restart(self.power_manager)
+
+    def goto_bootloader(self, rig_manager: RigManager=None):
+        self.bl.close()
+        self.bl = Bootloader(self.link_uri)
+        if self.power_manager is not None and rig_manager is not None:
+            print('Resetting to bootloader')
+            rig_manager.bootloader(self.power_manager)
+            time.sleep(2)
+
+
+    def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None, rig_manager:RigManager = None) -> bool:
         try:
             if path.name.endswith(".bin"):
                 targets = [Target('cf2', 'stm32', 'fw', [], [])]
             else:
                 targets = []
             try:
-                print('Trying cold flash', targets)
-                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
-                               enable_console_log=True, warm=False)
-            except Exception as e:
-                print('Failed cold flash (as expected), trying warm flash')
+                self.power_cycle(rig_manager)
                 self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
                     enable_console_log=True, warm=True)
+            except Exception as e:
+                print(f'Failed to flash {path} to {self.name}. Resetting to bootloader and trying again')
+                self.goto_bootloader(rig_manager)
+                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
+                    enable_console_log=True, warm=False)
+                self.power_cycle(rig_manager)
         finally:
             self.bl.close()
+            self.bl = Bootloader(self.link_uri)
 
     def connect_sync(self, querystring=None):
         self.cf.close_link()

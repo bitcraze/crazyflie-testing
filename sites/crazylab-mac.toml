@@ -1,6 +1,8 @@
 version = 1
+rig_management = "/dev/tty.usbmodemF412FA6372CC2"
 
 [device.cf21_stock]
 radio = "radio://0/50/2M/E7E7E71801"
 bootloader_radio = "radio://0/0/2M/B1C5DD7C7F?safelink=0"
+rig_management_addr= "0"
 
