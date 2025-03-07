@@ -346,8 +346,8 @@ class TestParameters:
             scf.cf.param.add_update_callback(group=group, name=name, cb=param_cb)
 
             scf.cf.param.set_value(param, 2)
-            scf.cf.param.set_value(param, 1)
-            scf.cf.param.set_value(param, 2)
+            scf.cf.param.set_value(param, '1')
+            scf.cf.param.set_value(param, '2')
             scf.cf.param.set_value(param, 1)
 
             scf.cf.param.set_value(param, int(initial))
