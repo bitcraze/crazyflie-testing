@@ -42,11 +42,10 @@ class TestRadio:
         requirement = conftest.get_requirement('radio.bwbig')
         assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
-    @pytest.mark.requirements("syslink_flowctrl")
     def test_reliability(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.reliability')
         # The bandwidth function will assert if there is any packet loss
-        bandwidth(dev.link_uri, 4, requirement['limit_low'])
+        ping(dev.link_uri, requirement['packet_size'], requirement['limit_low'])
 
 
 def latency(uri, cf, timeout=10):
@@ -88,10 +87,14 @@ def latency(uri, cf, timeout=10):
 
 
 def build_data(i, packet_size):
-    assert(packet_size % 4 == 0)
     repeats = packet_size // 4
-    return struct.pack('<' + 'I' * repeats, *[i] * repeats)
+    remainder = packet_size % 4
 
+    data = struct.pack('<' + 'I' * repeats, *[i] * repeats)
+
+    if remainder:  #Pad with 0xFF if there are remaining bytes
+        data += b'\xFF' * remainder
+    return data
 
 def bandwidth(uri, packet_size=4, count=500):
     link = cflib.crtp.get_link_driver(uri)
@@ -127,3 +130,32 @@ def bandwidth(uri, packet_size=4, count=500):
     logger.info('bandwidth: {}'.format(result))
 
     return result
+
+
+def ping(uri, packet_size=4, count=500):
+    link = cflib.crtp.get_link_driver(uri)
+
+    try:
+        for i in range(count):
+            pk = CRTPPacket()
+            pk.set_header(CRTPPort.LINKCTRL, 0)  # Echo channel
+            pk.data = build_data(i, packet_size)
+            if not link.send_packet(pk):
+                raise Exception("send_packet() timeout!")
+            time.sleep(0.1)
+            while True:
+                pk_ack = link.receive_packet(2)
+                if pk_ack is None:
+                    raise Exception("Receive packet timeout!")
+                if pk_ack.port == CRTPPort.LINKCTRL and pk_ack.channel == 0:
+                    break
+            # make sure we actually received the expected value
+            assert(pk.data == pk_ack.data)
+
+    except Exception as e:
+        link.close()
+        raise e
+
+    link.close()
+
+    return True

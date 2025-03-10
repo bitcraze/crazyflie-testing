@@ -30,9 +30,7 @@ limit_low = 350
 description = "Packet exchange without any information loss"
 rational = "Design"
 background = """
-The design is that there should never be any packet loss ever. So we should be
-able to exchange an infinit amount of packet.
-However, testing infinity is hard so, as a compromise, we are testing on
-30 000 packets which takes ~= 30s to test.
+We are pinging the Crazyflie with the max size packet and never loose any data
 """
-limit_low = 30_000   # It is hard to test infinity ....
+limit_low = 1000
+packet_size = 30
