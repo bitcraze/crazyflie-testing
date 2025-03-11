@@ -56,6 +56,7 @@ Packet rate (packets per seconds) for big radio packet (28 bytes)
 Packet exchange without any information loss
 |Field|Value|
 | :--- | :--- |
-|background|The design is that there should never be any packet loss ever. So we should be able to exchange an infinit amount of packet. However, testing infinity is hard so, as a compromise, we are testing on 30 000 packets which takes ~= 30s to test. |
-|limit_low|30000|
+|background|We are pinging the Crazyflie with the max size packet and never loose any data |
+|limit_low|1000|
+|packet_size|30|
 |rational|Design|
