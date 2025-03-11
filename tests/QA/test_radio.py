@@ -152,10 +152,7 @@ def ping(uri, packet_size=4, count=500):
             # make sure we actually received the expected value
             assert(pk.data == pk_ack.data)
 
-    except Exception as e:
+    finally:
         link.close()
-        raise e
-
-    link.close()
 
     return True
