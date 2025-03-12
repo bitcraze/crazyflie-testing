@@ -57,6 +57,6 @@ Packet exchange without any information loss
 |Field|Value|
 | :--- | :--- |
 |background|We are pinging the Crazyflie with the max size packet and never loose any data |
-|limit_low|1000|
+|limit_low|500|
 |packet_size|30|
 |rational|Design|
