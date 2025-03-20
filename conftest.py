@@ -95,6 +95,7 @@ class BCDevice:
 
         self.usb_power_control = self._parse_usb_power_control(device)
         self.power_manager = None
+        self.boot_time = 0.5
         try:
             self.bl_link_uri = device['bootloader_radio']
         except KeyError:
@@ -112,6 +113,8 @@ class BCDevice:
                 self.decks = device['decks']
             else:
                 raise Exception(f'Invalid decks in deck list of {self.name}: {device["decks"]}')
+        if 'bcAI' in self.decks:
+            self.boot_time = 5.5
         if 'properties' in device:
             self.properties = device['properties']
         if 'rig_management_addr' in device:
