@@ -24,9 +24,8 @@ class TestBootloaders:
         # The start_bootloader method only returns true if it can communicate with the bootloader.
         assert dev.bl.start_bootloader(warm_boot=True)
         dev.bl.reset_to_firmware()
-
         # Give the CF some time to boot
-        time.sleep(0.5)
+        time.sleep(dev.boot_time)
         assert dev.firmware_up()
 
         dev.bl.close()
