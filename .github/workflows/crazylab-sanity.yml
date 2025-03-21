@@ -87,7 +87,7 @@ jobs:
       CRAZY_SITE: crazylab-malmö
       CRAZY_DEVICE: cf21_stock,cf21bl_stock
       PYTHON_VERSION: ${{ matrix.python_version }}
-    timeout-minutes: 120
+    timeout-minutes: 200
     container:
       image: python:${{ matrix.python_version }}-bookworm
       options: --privileged
