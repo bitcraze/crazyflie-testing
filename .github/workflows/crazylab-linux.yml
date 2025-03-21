@@ -9,7 +9,7 @@ on:
 jobs:
   testsuite_at_crazylab:
     runs-on: [self-hosted, linux]
-    timeout-minutes: 120
+    timeout-minutes: 200
     container:
       image: python:3.13.0-bookworm
       options: --privileged
