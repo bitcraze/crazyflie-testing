@@ -42,6 +42,7 @@ class TestRadio:
         requirement = conftest.get_requirement('radio.bwbig')
         assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
+    @pytest.mark.requirements("syslink_flowctrl")
     def test_reliability(self, dev: conftest.BCDevice):
         requirement = conftest.get_requirement('radio.reliability')
         # The bandwidth function will assert if there is any packet loss
