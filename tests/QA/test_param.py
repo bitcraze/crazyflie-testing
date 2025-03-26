@@ -194,7 +194,7 @@ class TestParameters:
 
     @reboot_wrapper
     @pytest.mark.timeout(240)
-    @pytest.mark.decks('bcLighthouse4', 'bcFlow2', 'bcMultiranger', 'bcUSD', 'bcLoco')
+    @pytest.mark.exclude_decks('bcAI')
     def test_param_persistent_eeprom_stress(self, test_setup: conftest.DeviceFixture):
         """ Stress test the eeprom by setting and clearing persistent parameters. This will create holes in the eeprom
             memory which needs to be de-fragmented once it hits this limit, which should be between 250-300 persistent

@@ -34,7 +34,7 @@ class TestBootloaders:
         self.bootloader_back_and_forth(dev)
 
     @pytest.mark.timeout(240)
-    @pytest.mark.decks('bcLighthouse4', 'bcFlow2', 'bcMultiranger', 'bcUSD', 'bcLoco')
+    @pytest.mark.exclude_decks('bcAI')
     def test_bootloader_reset_stress(self, dev: conftest.BCDevice):
        requirement = conftest.get_requirement('bootloaders.reliability')
        for _ in range(0, requirement['iterations']):
