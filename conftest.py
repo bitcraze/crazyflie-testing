@@ -302,6 +302,7 @@ class DeviceFixture:
 def test_setup(request):
     ''' This code will run before (and after) a test '''
     fix = DeviceFixture(request.param)
+    fix.device.cf.open_link(fix.device.link_uri)
     yield fix  # code after this point will run as teardown after test
     fix.device.cf.close_link()
 
