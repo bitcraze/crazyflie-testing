@@ -161,7 +161,6 @@ class BCDevice:
                 link.close()
                 return True
 
-        link.close()
         return False
 
     def reboot(self):
@@ -347,7 +346,6 @@ def get_bl_address(dev: BCDevice) -> str:
             address = 'B1' + binascii.hexlify(pk.data[2:6][::-1]).upper().decode('utf8')  # noqa
             break
 
-    link.close()
     return address
 
 
