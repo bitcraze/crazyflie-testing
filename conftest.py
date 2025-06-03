@@ -45,7 +45,7 @@ def pytest_generate_tests(metafunc):
         if fixture == 'request':
             continue
         if devices:
-            metafunc.parametrize(fixture, devices, indirect=(fixture=='test_setup') , ids=lambda d: d.name)
+            metafunc.parametrize(fixture, devices, indirect=(fixture==fixture) , ids=lambda d: d.name)
         else:
             print(f'No devices found for test {metafunc.definition.name}')
             metafunc.parametrize(fixture, [pytest.param(None, marks=pytest.mark.ignore(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in modul
@@ -313,6 +313,11 @@ def test_setup(request):
     yield fix  # code after this point will run as teardown after test
     fix.close()
 
+@pytest.fixture
+def bl_test_setup(request):
+    device = request.param
+    device.start()
+    yield device  # code after this point will run as teardown after test
 
 def get_bl_address(dev: BCDevice) -> str:
     '''
