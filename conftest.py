@@ -119,6 +119,9 @@ class BCDevice:
             self.properties = device['properties']
         if 'rig_management_addr' in device:
             self.power_manager = device['rig_management_addr']
+
+
+    def start(self):
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -277,6 +280,7 @@ class BCDevice:
 
 class DeviceFixture:
     def __init__(self, dev: BCDevice):
+        dev.start()
         self._device = dev
 
     @property
@@ -298,12 +302,17 @@ class DeviceFixture:
             return all(deck in loco_decks for deck in self._device.decks)
         return False
 
+    def close(self):
+        if self._device is not None:
+            self._device.cf.close_link()
+            self._device = None
+
 @pytest.fixture
 def test_setup(request):
     ''' This code will run before (and after) a test '''
     fix = DeviceFixture(request.param)
     yield fix  # code after this point will run as teardown after test
-    fix.device.cf.close_link()
+    fix.close()
 
 
 def get_bl_address(dev: BCDevice) -> str:
