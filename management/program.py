@@ -75,6 +75,7 @@ def program(fw_zip: Path, retries=0) -> bool:
     rig_manager = get_rig_manager()
     print(rig_manager)
     for dev in get_devices():
+        dev.start()
         while True:
             try:
                 signal.alarm(TIMEOUT)

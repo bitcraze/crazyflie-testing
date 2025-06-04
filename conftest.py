@@ -45,7 +45,7 @@ def pytest_generate_tests(metafunc):
         if fixture == 'request':
             continue
         if devices:
-            metafunc.parametrize(fixture, devices, indirect=(fixture=='test_setup') , ids=lambda d: d.name)
+            metafunc.parametrize(fixture, devices, indirect=(fixture==fixture) , ids=lambda d: d.name)
         else:
             print(f'No devices found for test {metafunc.definition.name}')
             metafunc.parametrize(fixture, [pytest.param(None, marks=pytest.mark.ignore(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in modul
@@ -119,6 +119,9 @@ class BCDevice:
             self.properties = device['properties']
         if 'rig_management_addr' in device:
             self.power_manager = device['rig_management_addr']
+
+
+    def start(self):
         self.cf = Crazyflie(rw_cache='./cache')
 
         self.cf.console.receivedChar.add_callback(_console_cb)
@@ -158,7 +161,6 @@ class BCDevice:
                 link.close()
                 return True
 
-        link.close()
         return False
 
     def reboot(self):
@@ -277,6 +279,7 @@ class BCDevice:
 
 class DeviceFixture:
     def __init__(self, dev: BCDevice):
+        dev.start()
         self._device = dev
 
     @property
@@ -298,13 +301,23 @@ class DeviceFixture:
             return all(deck in loco_decks for deck in self._device.decks)
         return False
 
+    def close(self):
+        if self._device is not None:
+            self._device.cf.close_link()
+            self._device = None
+
 @pytest.fixture
 def test_setup(request):
     ''' This code will run before (and after) a test '''
     fix = DeviceFixture(request.param)
     yield fix  # code after this point will run as teardown after test
-    fix.device.cf.close_link()
+    fix.close()
 
+@pytest.fixture
+def dev(request):
+    device = request.param
+    device.start()
+    yield device  # code after this point will run as teardown after test
 
 def get_bl_address(dev: BCDevice) -> str:
     '''
@@ -338,7 +351,6 @@ def get_bl_address(dev: BCDevice) -> str:
             address = 'B1' + binascii.hexlify(pk.data[2:6][::-1]).upper().decode('utf8')  # noqa
             break
 
-    link.close()
     return address
 
 

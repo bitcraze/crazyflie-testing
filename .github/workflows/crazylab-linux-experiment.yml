@@ -18,6 +18,10 @@ on:
         type: boolean
         required: false
         default: false
+      lib_version:
+        description: 'Lib version to use'
+        type: string
+        default: 'master'
 
 #  schedule:
 #  - cron:  '0 6 * * *'
@@ -49,7 +53,7 @@ jobs:
             pip3 install pytest-timeout
 
       - name: Install Crazyflie python library
-        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
+        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@${{github.event.inputs.lib_version}}
 
       - name: Check out sources
         uses: actions/checkout@v4
