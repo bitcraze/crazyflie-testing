@@ -314,7 +314,7 @@ def test_setup(request):
     fix.close()
 
 @pytest.fixture
-def bl_test_setup(request):
+def dev(request):
     device = request.param
     device.start()
     yield device  # code after this point will run as teardown after test
