@@ -128,6 +128,11 @@ class BCDevice:
 
         self.bl = Bootloader(self.link_uri)
 
+    def delete(self):
+        self.cf.param.param_updater.close()
+        self.cf.incoming._stop()
+
+
     def __str__(self):
         string = '{} @ {}'.format(self.name, self.link_uri)
         if self.usb_power_control is not None:
@@ -311,6 +316,7 @@ def test_setup(request):
     ''' This code will run before (and after) a test '''
     fix = DeviceFixture(request.param)
     yield fix  # code after this point will run as teardown after test
+    request.param.delete()  # delete the Crazyflie object
     fix.close()
 
 @pytest.fixture
@@ -318,6 +324,7 @@ def dev(request):
     device = request.param
     device.start()
     yield device  # code after this point will run as teardown after test
+    device.delete()
 
 def get_bl_address(dev: BCDevice) -> str:
     '''
