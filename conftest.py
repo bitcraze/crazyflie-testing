@@ -318,6 +318,7 @@ def dev(request):
     device = request.param
     device.start()
     yield device  # code after this point will run as teardown after test
+    device.cf.close_link()
 
 def get_bl_address(dev: BCDevice) -> str:
     '''

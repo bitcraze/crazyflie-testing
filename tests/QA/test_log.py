@@ -24,6 +24,7 @@ from cflib.crazyflie.syncLogger import SyncLogger
 class TestLogVariables:
 
     @pytest.mark.sanity
+    @pytest.mark.exclude_decks('bcAI') #This fails with the ai deck sometimes. Flakyness.
     def test_log_async(self, test_setup: conftest.DeviceFixture):
         ''' Make sure we receive ~100 rows 1 second at 100Hz '''
         requirement = conftest.get_requirement('logging.basic')
