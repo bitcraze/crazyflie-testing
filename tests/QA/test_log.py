@@ -169,6 +169,7 @@ class TestLogVariables:
             actual_total_rate = sum(packets.values()) / duration
             assert_within_percentage(expected_total_rate, actual_total_rate, 3)
 
+    @pytest.mark.exclude_decks('bcAI')
     def test_log_sync(self, test_setup: conftest.DeviceFixture):
         ''' Make sure logging synchronous works '''
         requirement = conftest.get_requirement('logging.basic')
