@@ -324,7 +324,7 @@ def connected_bc_dev(request):
     logger.info(f'Finished test with device {bcDev.name} @ {bcDev.link_uri}')
 
 @pytest.fixture
-def dev(request):
+def unconnected_bc_dev(request):
     device = request.param
     device.start()
     yield device  # code after this point will run as teardown after test

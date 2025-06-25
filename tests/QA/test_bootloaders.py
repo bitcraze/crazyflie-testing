@@ -30,11 +30,11 @@ class TestBootloaders:
 
         dev.bl.close()
 
-    def test_bootloader_reset_simple(self, dev: conftest.BCDevice):
-        self.bootloader_back_and_forth(dev)
+    def test_bootloader_reset_simple(self, unconnected_bc_dev: conftest.BCDevice):
+        self.bootloader_back_and_forth(unconnected_bc_dev)
 
     @pytest.mark.timeout(240)
-    def test_bootloader_reset_stress(self, dev: conftest.BCDevice):
+    def test_bootloader_reset_stress(self, unconnected_bc_dev: conftest.BCDevice):
        requirement = conftest.get_requirement('bootloaders.reliability')
        for _ in range(0, requirement['iterations']):
-           self.bootloader_back_and_forth(dev)
+           self.bootloader_back_and_forth(unconnected_bc_dev)
