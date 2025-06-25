@@ -19,7 +19,7 @@ import random
 from threading import Event
 from utils.wrappers import reboot_wrapper
 
-from conftest import ValidatedSyncCrazyflie, BCDevice
+from conftest import BCDevice
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class TestParameters:
     @pytest.mark.sanity
-    def test_param_ronly(self,connected_bc_dev:BCDevice):
+    def test_param_ronly(self,connected_bc_dev: BCDevice):
             # Get a known (core) read-only parameter
             param = "deck.bcLighthouse4"
             element = connected_bc_dev.cf.param.toc.get_element_by_complete_name(param)
@@ -40,7 +40,7 @@ class TestParameters:
             with pytest.raises(AttributeError):
                 connected_bc_dev.cf.param.set_value(param, 1)
 
-    def test_param_extended_type(self, connected_bc_dev:BCDevice):
+    def test_param_extended_type(self, connected_bc_dev: BCDevice):
         # Get a known persistent parameter
         param = "ring.effect"
         element = connected_bc_dev.cf.param.toc.get_element_by_complete_name(param)
@@ -57,7 +57,7 @@ class TestParameters:
         assert not element.is_persistent()
 
     @pytest.mark.sanity
-    def test_param_persistent_store(self, connected_bc_dev:BCDevice):
+    def test_param_persistent_store(self, connected_bc_dev: BCDevice):
         # Get a known persistent parameter
         param = "sound.effect"
 
@@ -96,7 +96,7 @@ class TestParameters:
         assert int(val) == value
 
     @pytest.mark.sanity
-    def test_param_persistent_clear(self, connected_bc_dev:BCDevice):
+    def test_param_persistent_clear(self, connected_bc_dev: BCDevice):
 
         # Get a known persistent parameter
         param = "sound.effect"
@@ -150,7 +150,7 @@ class TestParameters:
             tries -= 1
         assert gotten_state
 
-    def test_param_persistent_get_state(self, connected_bc_dev:BCDevice):
+    def test_param_persistent_get_state(self, connected_bc_dev: BCDevice):
         # Get a known persistent parameter
         param = "sound.effect"
 
@@ -188,7 +188,7 @@ class TestParameters:
     @reboot_wrapper
     @pytest.mark.timeout(240)
     @pytest.mark.exclude_decks('bcAI')
-    def test_param_persistent_eeprom_stress(self, connected_bc_dev:BCDevice):
+    def test_param_persistent_eeprom_stress(self, connected_bc_dev: BCDevice):
         """ Stress test the eeprom by setting and clearing persistent parameters. This will create holes in the eeprom
             memory which needs to be de-fragmented once it hits this limit, which should be between 250-300 persistent
             parameters.
@@ -289,7 +289,7 @@ class TestParameters:
             assert max_time < max_sec_defrag
 
 
-    def test_param_set_raw(self, connected_bc_dev:BCDevice):
+    def test_param_set_raw(self, connected_bc_dev: BCDevice):
         param = "ring.effect"
         value = 13  # Gravity effect
         updated = False

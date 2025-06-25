@@ -18,14 +18,14 @@ import time
 from collections import defaultdict
 
 from cflib.crazyflie.log import LogConfig
-from conftest import ValidatedSyncCrazyflie
+from conftest import BCDevice
 from cflib.crazyflie.syncLogger import SyncLogger
 
 class TestLogVariables:
 
     @pytest.mark.sanity
     @pytest.mark.exclude_decks('bcAI') #This fails with the ai deck sometimes. Flakyness.
-    def test_log_async(self, connected_bc_dev: conftest.BCDevice):
+    def test_log_async(self, connected_bc_dev: BCDevice):
         ''' Make sure we receive ~100 rows 1 second at 100Hz '''
         requirement = conftest.get_requirement('logging.basic')
         expected_rate = requirement['max_rate']  # Hz
@@ -51,7 +51,7 @@ class TestLogVariables:
         actual_rate = rows / duration
         assert_within_percentage(expected_rate, actual_rate, 3)
 
-    def test_log_too_many_variables(self, connected_bc_dev: conftest.BCDevice):
+    def test_log_too_many_variables(self, connected_bc_dev: BCDevice):
         '''
         Make sure we get an AttributeError when adding more variables
         than logging.variables.max.
@@ -89,7 +89,7 @@ class TestLogVariables:
             for config in configs:
                 config.start()
 
-    def test_log_too_many_blocks(self, connected_bc_dev: conftest.BCDevice):
+    def test_log_too_many_blocks(self, connected_bc_dev: BCDevice):
         '''
         Make sure we get an AttributeError when adding more blocks
         than logging.blocks.max.
@@ -106,7 +106,7 @@ class TestLogVariables:
             for config in configs:
                 config.start()
 
-    def test_log_too_much_per_block(self, connected_bc_dev: conftest.BCDevice):
+    def test_log_too_much_per_block(self, connected_bc_dev: BCDevice):
         '''
         Make sure we get an AttributeError when adding more bytes
         than logging.blocks.max_payload to a LogConfig.
@@ -121,7 +121,7 @@ class TestLogVariables:
 
     @pytest.mark.sanity
     @pytest.mark.exclude_decks('bcDWM1000','bcFlow', 'bcFlow2', 'lighthouse4')
-    def test_log_stress(self, connected_bc_dev: conftest.BCDevice):
+    def test_log_stress(self, connected_bc_dev: BCDevice):
         '''
         Make sure we can receive all packets requested when having an effective
         rate of logging.rate packets/s.
@@ -159,7 +159,7 @@ class TestLogVariables:
         assert_within_percentage(expected_total_rate, actual_total_rate, 3)
 
     @pytest.mark.exclude_decks('bcAI')
-    def test_log_sync(self, connected_bc_dev: conftest.BCDevice):
+    def test_log_sync(self, connected_bc_dev: BCDevice):
         ''' Make sure logging synchronous works '''
         requirement = conftest.get_requirement('logging.basic')
         config = init_log_max_bytes()

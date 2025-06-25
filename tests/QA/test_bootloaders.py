@@ -14,13 +14,14 @@
 import pytest
 import conftest
 import time
+from conftest import BCDevice
 
 
 
 class TestBootloaders:
 
     @staticmethod
-    def bootloader_back_and_forth(dev: conftest.BCDevice):
+    def bootloader_back_and_forth(dev: BCDevice):
         # The start_bootloader method only returns true if it can communicate with the bootloader.
         assert dev.bl.start_bootloader(warm_boot=True)
         dev.bl.reset_to_firmware()
@@ -30,11 +31,11 @@ class TestBootloaders:
 
         dev.bl.close()
 
-    def test_bootloader_reset_simple(self, unconnected_bc_dev: conftest.BCDevice):
+    def test_bootloader_reset_simple(self, unconnected_bc_dev: BCDevice):
         self.bootloader_back_and_forth(unconnected_bc_dev)
 
     @pytest.mark.timeout(240)
-    def test_bootloader_reset_stress(self, unconnected_bc_dev: conftest.BCDevice):
+    def test_bootloader_reset_stress(self, unconnected_bc_dev: BCDevice):
        requirement = conftest.get_requirement('bootloaders.reliability')
        for _ in range(0, requirement['iterations']):
            self.bootloader_back_and_forth(unconnected_bc_dev)

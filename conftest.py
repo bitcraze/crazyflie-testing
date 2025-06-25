@@ -281,36 +281,6 @@ class BCDevice:
 
         return is_connection_success
 
-class DeviceFixture:
-    def __init__(self, dev: BCDevice):
-        dev.start()
-        self._device = dev
-
-    @property
-    def device(self) -> BCDevice:
-        return self._device
-
-    @property
-    def kalman_active(self) -> bool:
-        kalman_decks = ['bcLighthouse4', 'bcFlow', 'bcFlow2', 'bcDWM1000']
-        if self._device.decks:
-            return all(deck in kalman_decks for deck in self._device.decks)
-        else:
-            return False
-
-    @property
-    def has_loco_deck(self) -> bool:
-        loco_decks = ['bcLoco', 'bcDWM1000']
-        if self._device.decks:
-            return all(deck in loco_decks for deck in self._device.decks)
-        return False
-
-    def close(self):
-        if self._device is not None:
-            self._device.cf.close_link()
-            self._device = None
-            '''
-
 @pytest.fixture
 def connected_bc_dev(request):
     ''' This code will run before (and after) a test '''

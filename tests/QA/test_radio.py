@@ -18,7 +18,7 @@ import struct
 import cflib.crtp
 from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
-from conftest import ValidatedSyncCrazyflie
+from conftest import BCDevice
 from cflib.utils.callbacks import Syncer
 
 import conftest
@@ -28,22 +28,22 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.sanity
 class TestRadio:
-    def test_latency(self, connected_bc_dev: conftest.BCDevice):
+    def test_latency(self, connected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.latency')
         assert(latency(connected_bc_dev) < requirement['limit_high_ms'])
 
     @pytest.mark.requirements("syslink_flowctrl")
-    def test_bandwidth_small_packets(self, unconnected_bc_dev: conftest.BCDevice):
+    def test_bandwidth_small_packets(self, unconnected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.bwsmall')
         assert(bandwidth(unconnected_bc_dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
     @pytest.mark.requirements("syslink_flowctrl")
-    def test_bandwidth_big_packets(self, unconnected_bc_dev: conftest.BCDevice):
+    def test_bandwidth_big_packets(self, unconnected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.bwbig')
         assert(bandwidth(unconnected_bc_dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
     @pytest.mark.requirements("syslink_flowctrl")
-    def test_reliability(self, unconnected_bc_dev: conftest.BCDevice):
+    def test_reliability(self, unconnected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.reliability')
         # The bandwidth function will assert if there is any packet loss
         ping(unconnected_bc_dev.link_uri, requirement['packet_size'], requirement['limit_low'])
