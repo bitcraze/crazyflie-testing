@@ -15,7 +15,7 @@ import pytest
 import conftest
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
-from conftest import ALL_DECKS
+from conftest import ALL_DECKS, BCDevice
 
 #
 # Using the indirect=True parameter when parametrizing a test allows to
@@ -27,15 +27,15 @@ from conftest import ALL_DECKS
 
 class TestDecks:
 
-    def test_deck_present(self, test_setup: conftest.DeviceFixture):
+    def test_deck_present(self, connected_bc_dev: BCDevice):
         '''
         Check that all decks defined for the device in the site
         is detected, using the parameter interface. 
         '''
 
         for deck in ALL_DECKS:
-            is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
-            if deck in test_setup.device.decks:
+            is_deck_present = int(connected_bc_dev.cf.param.get_value(f'deck.{deck}'))
+            if deck in connected_bc_dev.decks:
                 assert is_deck_present, f'Deck {deck} is not present'
             else:
                 assert not is_deck_present, f'Device reporting {deck} is present but it is not'
@@ -43,7 +43,7 @@ class TestDecks:
 
 
     @pytest.mark.decks("bcLoco")
-    def test_loco_deck_loop_is_running(self, test_setup: conftest.DeviceFixture):
+    def test_loco_deck_loop_is_running(self, connected_bc_dev: BCDevice):
         '''
         Check that the event loop in the loco deck driver is running, this is indicated by read and writes to the SPI
         bus.
@@ -57,7 +57,7 @@ class TestDecks:
         log_config.add_variable(READ_LOG, 'float')
         log_config.add_variable(WRITE_LOG, 'float')
 
-        with SyncLogger(test_setup.device.cf, log_config) as logger:
+        with SyncLogger(connected_bc_dev.cf, log_config) as logger:
             for entry in logger:
                 read_rate = entry[1][READ_LOG]
                 write_rate = entry[1][WRITE_LOG]
