@@ -84,7 +84,6 @@ class TestLogVariables:
             configs.append(init_log_many_variables('ManyVariables_%d' % i))
 
         # We need to be connected to a Crazyflie to add a log config
-        assert test_setup.device.connect_sync()
 
         for config in configs:
             test_setup.device.cf.log.add_config(config)
@@ -104,7 +103,6 @@ class TestLogVariables:
             configs.append(init_log_max_bytes('MaxGroup_%d' % i))
 
         # We need to be connected to a Crazyflie to add a log config
-        assert test_setup.device.connect_sync()
 
         for config in configs:
             test_setup.device.cf.log.add_config(config)
@@ -124,7 +122,6 @@ class TestLogVariables:
         config.add_variable('radio.rssi', 'uint8_t')
 
         # We need to be connected to a Crazyflie to add a log config
-        assert test_setup.device.connect_sync()
 
         with pytest.raises(AttributeError):
             test_setup.device.cf.log.add_config(config)

@@ -42,7 +42,6 @@ class TestParameters:
                 scf.cf.param.set_value(param, 1)
 
     def test_param_extended_type(self, test_setup: conftest.DeviceFixture):
-        assert test_setup.device.connect_sync()
 
         # Get a known persistent parameter
         param = "ring.effect"
@@ -66,8 +65,6 @@ class TestParameters:
 
         # Get a random valid value
         value = random.randint(8, 13)
-
-        assert test_setup.device.connect_sync()
 
         # Set Value
         logger.info(f"Setting value {value} as {param}")
@@ -102,7 +99,6 @@ class TestParameters:
         
     @pytest.mark.sanity
     def test_param_persistent_clear(self, test_setup: conftest.DeviceFixture):
-        assert test_setup.device.connect_sync()
 
         # Get a known persistent parameter
         param = "sound.effect"

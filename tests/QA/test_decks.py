@@ -32,7 +32,6 @@ class TestDecks:
         Check that all decks defined for the device in the site
         is detected, using the parameter interface. 
         '''
-        assert test_setup.device.connect_sync()
 
         for deck in ALL_DECKS:
             is_deck_present = int(test_setup.device.cf.param.get_value(f'deck.{deck}'))
@@ -50,7 +49,6 @@ class TestDecks:
         bus.
         '''
 
-        assert test_setup.device.connect_sync()
 
         READ_LOG = 'loco.spiRe'
         WRITE_LOG = 'loco.spiWr'
