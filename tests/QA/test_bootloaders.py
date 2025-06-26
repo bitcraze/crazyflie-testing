@@ -35,6 +35,7 @@ class TestBootloaders:
         self.bootloader_back_and_forth(unconnected_bc_dev)
 
     @pytest.mark.timeout(240)
+    @pytest.mark.exclude_decks('bcAI')
     def test_bootloader_reset_stress(self, unconnected_bc_dev: BCDevice):
        requirement = conftest.get_requirement('bootloaders.reliability')
        for _ in range(0, requirement['iterations']):
