@@ -18,7 +18,7 @@ import struct
 import cflib.crtp
 from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
-from conftest import ValidatedSyncCrazyflie
+from conftest import BCDevice
 from cflib.utils.callbacks import Syncer
 
 import conftest
@@ -28,28 +28,28 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.sanity
 class TestRadio:
-    def test_latency(self, dev: conftest.BCDevice):
+    def test_latency(self, connected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.latency')
-        assert(latency(dev.link_uri, dev.cf) < requirement['limit_high_ms'])
+        assert(latency(connected_bc_dev) < requirement['limit_high_ms'])
 
     @pytest.mark.requirements("syslink_flowctrl")
-    def test_bandwidth_small_packets(self, dev: conftest.BCDevice):
+    def test_bandwidth_small_packets(self, unconnected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.bwsmall')
-        assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
+        assert(bandwidth(unconnected_bc_dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
     @pytest.mark.requirements("syslink_flowctrl")
-    def test_bandwidth_big_packets(self, dev: conftest.BCDevice):
+    def test_bandwidth_big_packets(self, unconnected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.bwbig')
-        assert(bandwidth(dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
+        assert(bandwidth(unconnected_bc_dev.link_uri, requirement['packet_size']) > requirement['limit_low'])
 
     @pytest.mark.requirements("syslink_flowctrl")
-    def test_reliability(self, dev: conftest.BCDevice):
+    def test_reliability(self, unconnected_bc_dev: BCDevice):
         requirement = conftest.get_requirement('radio.reliability')
         # The bandwidth function will assert if there is any packet loss
-        ping(dev.link_uri, requirement['packet_size'], requirement['limit_low'])
+        ping(unconnected_bc_dev.link_uri, requirement['packet_size'], requirement['limit_low'])
 
 
-def latency(uri, cf, timeout=10):
+def latency(connected_bc_dev: conftest.BCDevice, timeout=10):
     """
     Retrieve the latency to a Crazyflie.
 
@@ -64,27 +64,27 @@ def latency(uri, cf, timeout=10):
     Raises:
         TimeoutError: If the timeout is reached during latency retrieval.
     """
-    with ValidatedSyncCrazyflie(uri, cf) as scf:
-        time.sleep(10)  # wait 10 seconds for the p95 latency to converge
 
-        syncer = Syncer()
+    time.sleep(10)  # wait 10 seconds for the p95 latency to converge
 
-        def on_latency_update(latency):
-            syncer.success_cb(latency)
+    syncer = Syncer()
 
-        # Add the callback
-        scf.cf.link_statistics.latency_updated.add_callback(on_latency_update)
+    def on_latency_update(latency):
+        syncer.success_cb(latency)
 
-        try:
-            # Wait for latency update
-            success = syncer._event.wait(timeout)
-            if not success:
-                raise TimeoutError("Timed out waiting for a latency update.")
-            latency = syncer.success_args[0]
-            logger.info('latency: {}'.format(latency))
-            return latency
-        finally:
-            scf.cf.link_statistics.latency_updated.remove_callback(on_latency_update)
+    # Add the callback
+    connected_bc_dev.cf.link_statistics.latency_updated.add_callback(on_latency_update)
+
+    try:
+        # Wait for latency update
+        success = syncer._event.wait(timeout)
+        if not success:
+            raise TimeoutError("Timed out waiting for a latency update.")
+        latency = syncer.success_args[0]
+        logger.info('latency: {}'.format(latency))
+        return latency
+    finally:
+        connected_bc_dev.cf.link_statistics.latency_updated.remove_callback(on_latency_update)
 
 
 def build_data(i, packet_size):

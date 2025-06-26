@@ -18,14 +18,14 @@ import time
 from collections import defaultdict
 
 from cflib.crazyflie.log import LogConfig
-from conftest import ValidatedSyncCrazyflie
+from conftest import BCDevice
 from cflib.crazyflie.syncLogger import SyncLogger
 
 class TestLogVariables:
 
     @pytest.mark.sanity
     @pytest.mark.exclude_decks('bcAI') #This fails with the ai deck sometimes. Flakyness.
-    def test_log_async(self, test_setup: conftest.DeviceFixture):
+    def test_log_async(self, connected_bc_dev: BCDevice):
         ''' Make sure we receive ~100 rows 1 second at 100Hz '''
         requirement = conftest.get_requirement('logging.basic')
         expected_rate = requirement['max_rate']  # Hz
@@ -40,19 +40,18 @@ class TestLogVariables:
             rows += 1
             assert_variables_included(data, config.variables)
 
-        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
-            scf.cf.log.add_config(config)
-            config.data_received_cb.add_callback(log_callback)
+        connected_bc_dev.cf.log.add_config(config)
+        config.data_received_cb.add_callback(log_callback)
 
-            config.start()
-            time.sleep(duration)
-            config.stop()
+        config.start()
+        time.sleep(duration)
+        config.stop()
 
-            # Allow for 3% diff
-            actual_rate = rows / duration
-            assert_within_percentage(expected_rate, actual_rate, 3)
+        # Allow for 3% diff
+        actual_rate = rows / duration
+        assert_within_percentage(expected_rate, actual_rate, 3)
 
-    def test_log_too_many_variables(self, test_setup: conftest.DeviceFixture):
+    def test_log_too_many_variables(self, connected_bc_dev: BCDevice):
         '''
         Make sure we get an AttributeError when adding more variables
         than logging.variables.max.
@@ -83,17 +82,14 @@ class TestLogVariables:
         for i in range(int(requirement['max'] / 12) + 1):
             configs.append(init_log_many_variables('ManyVariables_%d' % i))
 
-        # We need to be connected to a Crazyflie to add a log config
-        assert test_setup.device.connect_sync()
-
         for config in configs:
-            test_setup.device.cf.log.add_config(config)
+            connected_bc_dev.cf.log.add_config(config)
 
         with pytest.raises(AttributeError):
             for config in configs:
                 config.start()
 
-    def test_log_too_many_blocks(self, test_setup: conftest.DeviceFixture):
+    def test_log_too_many_blocks(self, connected_bc_dev: BCDevice):
         '''
         Make sure we get an AttributeError when adding more blocks
         than logging.blocks.max.
@@ -103,17 +99,14 @@ class TestLogVariables:
         for i in range(requirement['max'] + 1):
             configs.append(init_log_max_bytes('MaxGroup_%d' % i))
 
-        # We need to be connected to a Crazyflie to add a log config
-        assert test_setup.device.connect_sync()
-
         for config in configs:
-            test_setup.device.cf.log.add_config(config)
+            connected_bc_dev.cf.log.add_config(config)
 
         with pytest.raises(AttributeError):
             for config in configs:
                 config.start()
 
-    def test_log_too_much_per_block(self, test_setup: conftest.DeviceFixture):
+    def test_log_too_much_per_block(self, connected_bc_dev: BCDevice):
         '''
         Make sure we get an AttributeError when adding more bytes
         than logging.blocks.max_payload to a LogConfig.
@@ -123,15 +116,12 @@ class TestLogVariables:
         # Adding one byte brings us to 27 bytes, and 26 (LogConfig.MAX_LEN) is max.
         config.add_variable('radio.rssi', 'uint8_t')
 
-        # We need to be connected to a Crazyflie to add a log config
-        assert test_setup.device.connect_sync()
-
         with pytest.raises(AttributeError):
-            test_setup.device.cf.log.add_config(config)
+            connected_bc_dev.cf.log.add_config(config)
 
     @pytest.mark.sanity
     @pytest.mark.exclude_decks('bcDWM1000','bcFlow', 'bcFlow2', 'lighthouse4')
-    def test_log_stress(self, test_setup: conftest.DeviceFixture):
+    def test_log_stress(self, connected_bc_dev: BCDevice):
         '''
         Make sure we can receive all packets requested when having an effective
         rate of logging.rate packets/s.
@@ -152,35 +142,33 @@ class TestLogVariables:
         def stress_cb(ts, data, config):
             packets[config.name] += 1
 
-        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
-            for config in configs:
-                scf.cf.log.add_config(config)
-                config.data_received_cb.add_callback(stress_cb)
-                config.start()
+        for config in configs:
+            connected_bc_dev.cf.log.add_config(config)
+            config.data_received_cb.add_callback(stress_cb)
+            config.start()
 
-            time.sleep(duration)
+        time.sleep(duration)
 
-            for config in configs:
-                config.stop()
-                # Check the number of packets we got per config, allow for 3% margin.
-                actual_rate_per_block = packets[config.name] / duration
-                assert_within_percentage(expected_rate_per_block, actual_rate_per_block, 3)
+        for config in configs:
+            config.stop()
+            # Check the number of packets we got per config, allow for 3% margin.
+            actual_rate_per_block = packets[config.name] / duration
+            assert_within_percentage(expected_rate_per_block, actual_rate_per_block, 3)
 
-            actual_total_rate = sum(packets.values()) / duration
-            assert_within_percentage(expected_total_rate, actual_total_rate, 3)
+        actual_total_rate = sum(packets.values()) / duration
+        assert_within_percentage(expected_total_rate, actual_total_rate, 3)
 
     @pytest.mark.exclude_decks('bcAI')
-    def test_log_sync(self, test_setup: conftest.DeviceFixture):
+    def test_log_sync(self, connected_bc_dev: BCDevice):
         ''' Make sure logging synchronous works '''
         requirement = conftest.get_requirement('logging.basic')
         config = init_log_max_bytes()
 
-        with ValidatedSyncCrazyflie(test_setup.device.link_uri) as scf:
-            with SyncLogger(scf, config) as logger:
-                for rows, (ts, data, config) in enumerate(logger):
-                    assert_variables_included(data, config.variables)
-                    if rows >= requirement['max_rate']:
-                        break
+        with SyncLogger(connected_bc_dev.sync_cf, config) as logger:
+            for rows, (ts, data, config) in enumerate(logger):
+                assert_variables_included(data, config.variables)
+                if rows >= requirement['max_rate']:
+                    break
 
 
 def init_log_max_bytes(name: str='MaxGroup', period_in_ms: int=10) -> LogConfig:

@@ -10,6 +10,7 @@ import glob
 import struct
 import sys
 import subprocess
+import logging
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from threading import Event
 from typing import Callable, List, NoReturn, Optional
@@ -31,6 +32,8 @@ DEFAULT_SITE = 'single-cf'
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 
 ALL_DECKS= ['bcLighthouse4', 'bcFlow2', 'bcMultiranger', 'bcUSD', 'bcAI', 'bcLoco']
+
+logger = logging.getLogger(__name__)
 
 
 def pytest_generate_tests(metafunc):
@@ -96,6 +99,7 @@ class BCDevice:
         self.usb_power_control = self._parse_usb_power_control(device)
         self.power_manager = None
         self.boot_time = 0.5
+        self.sync_cf = None
         try:
             self.bl_link_uri = device['bootloader_radio']
         except KeyError:
@@ -277,44 +281,20 @@ class BCDevice:
 
         return is_connection_success
 
-class DeviceFixture:
-    def __init__(self, dev: BCDevice):
-        dev.start()
-        self._device = dev
-
-    @property
-    def device(self) -> BCDevice:
-        return self._device
-
-    @property
-    def kalman_active(self) -> bool:
-        kalman_decks = ['bcLighthouse4', 'bcFlow', 'bcFlow2', 'bcDWM1000']
-        if self._device.decks:
-            return all(deck in kalman_decks for deck in self._device.decks)
-        else:
-            return False
-
-    @property
-    def has_loco_deck(self) -> bool:
-        loco_decks = ['bcLoco', 'bcDWM1000']
-        if self._device.decks:
-            return all(deck in loco_decks for deck in self._device.decks)
-        return False
-
-    def close(self):
-        if self._device is not None:
-            self._device.cf.close_link()
-            self._device = None
-
 @pytest.fixture
-def test_setup(request):
+def connected_bc_dev(request):
     ''' This code will run before (and after) a test '''
-    fix = DeviceFixture(request.param)
-    yield fix  # code after this point will run as teardown after test
-    fix.close()
+    bcDev = request.param
+    bcDev.start() #Create the crazyflie object
+    with ValidatedSyncCrazyflie(bcDev.link_uri, cf=bcDev.cf) as cf:
+        bcDev.sync_cf = cf  # Update the cf in the BCDevice object
+        logger.info(f'Starting test with device {bcDev.name} @ {bcDev.link_uri}')
+        yield bcDev  # code after this point will run as teardown after test
+        bcDev.cf.close_link()
+    logger.info(f'Finished test with device {bcDev.name} @ {bcDev.link_uri}')
 
 @pytest.fixture
-def dev(request):
+def unconnected_bc_dev(request):
     device = request.param
     device.start()
     yield device  # code after this point will run as teardown after test
@@ -509,3 +489,7 @@ class ValidatedSyncCrazyflie(SyncCrazyflie):
         assert is_self_test_pass
 
         return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        logger.info('Exciting')
+        self.cf.console.receivedChar.remove_callback(_console_cb)
+        super().__exit__(exc_type, exc_val, exc_tb)

@@ -13,12 +13,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 from threading import Event
 import pytest
-import conftest
+from conftest import BCDevice
 from cflib.crazyflie.mem import MemoryElement
 
 
 class TestMem:
-    def test_mem_ow(self, test_setup: conftest.DeviceFixture):
+    def test_mem_ow(self, connected_bc_dev: BCDevice):
         '''
         Check that we can read the One Wire memory from decks and that it matches the deck.
         '''
@@ -27,9 +27,8 @@ class TestMem:
             read_mems.append(mem.elements['Board name'])
             update_event.set()
 
-        assert test_setup.device.connect_sync()
-        mems = test_setup.device.cf.mem.get_mems(MemoryElement.TYPE_1W)
-        assert len(mems) == len(test_setup.device.decks)
+        mems = connected_bc_dev.cf.mem.get_mems(MemoryElement.TYPE_1W)
+        assert len(mems) == len(connected_bc_dev.decks)
 
         update_event = Event()
         read_mems = []
@@ -39,5 +38,5 @@ class TestMem:
             success = update_event.wait(timeout=1.0)
             assert success
 
-        assert len(read_mems) == len(test_setup.device.decks)
-        assert sorted(read_mems) == sorted(test_setup.device.decks)
+        assert len(read_mems) == len(connected_bc_dev.decks)
+        assert sorted(read_mems) == sorted(connected_bc_dev.decks)
