@@ -291,6 +291,7 @@ def connected_bc_dev(request):
         logger.info(f'Starting test with device {bcDev.name} @ {bcDev.link_uri}')
         yield bcDev  # code after this point will run as teardown after test
         bcDev.cf.close_link()
+        bcDev.cf.delete()
     logger.info(f'Finished test with device {bcDev.name} @ {bcDev.link_uri}')
 
 @pytest.fixture
