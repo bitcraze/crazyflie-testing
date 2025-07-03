@@ -7,6 +7,7 @@ on:
       category:
         type: string
         description: 'Test category.' #Format: tests/.../test_*.py'
+        default: 'tests/QA/'
       filter:
         type: string
         description: 'Select a filter to filter the tests on' #NOTE to filter on more than one test, use the following syntax: -k "filter1 or filter2"
