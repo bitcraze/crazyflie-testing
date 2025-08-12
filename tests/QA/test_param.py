@@ -19,7 +19,7 @@ import random
 from threading import Event
 from utils.wrappers import reboot_wrapper
 
-from conftest import BCDevice
+from conftest import BCDevice, ALL_DECKS
 
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,9 @@ class TestParameters:
         # Allow time to reboot
         time.sleep(5)
 
-        assert connected_bc_dev.connect_sync()
+        assert connected_bc_dev.connect_sync()  # This is the only test that waits for fully connected state.
+                                                # Can fail if radio is in bad state from previous communication
+                                                # issues (e.g. buffer overflows from rapid parameter queries).
 
         val = connected_bc_dev.cf.param.get_value(param)
         assert int(val) == value
@@ -349,3 +351,15 @@ class TestParameters:
         time.sleep(timeout)
 
         assert len(expected) == 0
+
+    def test_param_get_stress(self, connected_bc_dev: BCDevice):
+        """
+        Stress test rapid parameter getting to trigger STM32<->nRF flow control issues.
+        This reproduces the same pattern as test_deck_present but more intensively.
+        """
+        # Multiple rounds of rapid-fire parameter getting without delays (like original test_deck_present)
+        for i in range(3):  # Multiple rounds to increase stress
+            for deck in ALL_DECKS:
+                value = connected_bc_dev.cf.param.get_value(f'deck.{deck}')
+                assert value is not None, f"Failed to get value for deck.{deck} on round {i+1}"
+                # No delay here - this is the stress test!

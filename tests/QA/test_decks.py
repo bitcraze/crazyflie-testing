@@ -13,6 +13,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 import pytest
 import conftest
+import time
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
 from conftest import ALL_DECKS, BCDevice
@@ -39,6 +40,10 @@ class TestDecks:
                 assert is_deck_present, f'Deck {deck} is not present'
             else:
                 assert not is_deck_present, f'Device reporting {deck} is present but it is not'
+            # Add delay to prevent firmware asserts during rapid parameter queries.
+            # Without this delay, asserts occur at radiolink.c:166 and uart_syslink.c:549.
+            # See test_param_get_stress for intentional reproduction of this issue.
+            time.sleep(0.1)
 
 
 
