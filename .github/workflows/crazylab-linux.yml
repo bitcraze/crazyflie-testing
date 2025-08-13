@@ -11,7 +11,7 @@ jobs:
     runs-on: [self-hosted, linux]
     timeout-minutes: 200
     container:
-      image: python:3.13.0-bookworm
+      image: python:3.13-bookworm
       options: --privileged
     env:
       CRAZY_SITE: crazylab-malmö
