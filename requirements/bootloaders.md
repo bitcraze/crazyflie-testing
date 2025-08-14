@@ -45,3 +45,4 @@ Switching between bootloader and main firmware
 |background|The design is that there should never be any timing dependencies in the python API So we should be able to go back and forth between bootloader and main firmware for ever. However, testing infinity is hard so, as a compromise, we are testing with 20 iterations per device. |
 |iterations|20|
 |rational|Design|
+|timeout_per_iteration|12|
