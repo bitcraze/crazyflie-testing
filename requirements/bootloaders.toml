@@ -23,3 +23,4 @@ However, testing infinity is hard so, as a compromise, we are testing with
 20 iterations per device.
 """
 iterations = 20
+timeout_per_iteration = 12
