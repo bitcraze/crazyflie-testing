@@ -4,7 +4,7 @@ name: Crazy Stab Sanity 🗡️
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '0 6 * * *'
+    - cron:  '0 6 * * 1-5'
 jobs:
   #TODO add flashing of crazyflies
   setup_mac:
