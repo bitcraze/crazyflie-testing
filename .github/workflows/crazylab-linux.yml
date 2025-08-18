@@ -4,7 +4,7 @@ name: Crazy Stab Lab 🗡️
 on:
   workflow_dispatch:
   schedule:
-  - cron:  '0 2 * * *'
+  - cron:  '0 2 * * 1-5'
 
 jobs:
   testsuite_at_crazylab:
