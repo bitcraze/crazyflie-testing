@@ -219,8 +219,6 @@ class BCDevice:
             self.bl = Bootloader(self.link_uri)
 
     def connect_sync(self, querystring=None):
-        self.cf.close_link()
-
         if querystring is None:
             uri = self.link_uri
         else:
