@@ -34,6 +34,7 @@ class TestBootloaders:
     )
     def test_bootloader_reset_simple(self, unconnected_bc_dev: BCDevice):
         self.bootloader_back_and_forth(unconnected_bc_dev)
+        time.sleep(1)
         assert unconnected_bc_dev.connect_sync()
 
     @pytest.mark.timeout(
@@ -46,4 +47,5 @@ class TestBootloaders:
 
         for _ in range(0, iterations):
             self.bootloader_back_and_forth(unconnected_bc_dev)
+        time.sleep(1)
         assert unconnected_bc_dev.connect_sync()
