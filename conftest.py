@@ -1,5 +1,5 @@
 from collections import namedtuple
-from enum import Enum
+from enum import IntEnum
 import string
 import pytest
 import binascii
@@ -80,12 +80,25 @@ def get_rig_manager():
         return None
 
 
-class USB_Power_Control_Action(str, Enum):
-    ON     = 'on'
-    OFF    = 'off'
-    TOGGLE = 'toggle'
-    RESET  = 'reset'
+class USB_Power_Control_Action(IntEnum):
+    OFF    = 0
+    ON     = 1
+    RESET  = 2  # cycle
+    TOGGLE = 3
 
+    @classmethod
+    def from_str(cls, s):
+        s = s.lower()
+        if s == "off":
+            return cls.OFF
+        elif s == "on":
+            return cls.ON
+        elif s == "reset":
+            return cls.RESET
+        elif s == "toggle":
+            return cls.TOGGLE
+        else:
+            raise ValueError(f"Unknown USB_Power_Control_Action string: {s}")
 
 class BCDevice:
     CONNECT_TIMEOUT = 10  # seconds
@@ -233,12 +246,22 @@ class BCDevice:
 
         return is_connected and is_self_test_pass
 
-    def set_usb_power(self, action: USB_Power_Control_Action) -> bool:
+    def set_usb_power(self, action) -> bool:
         if self.usb_power_control is None:
             return False
 
+        # Accept both string and enum
+        if isinstance(action, str):
+            try:
+                action_enum = USB_Power_Control_Action.from_str(action)
+            except Exception:
+                print(f"Invalid USB power action: {action}")
+                return False
+        else:
+            action_enum = action
+
         hub, port = self.usb_power_control.hub, self.usb_power_control.port
-        cmd = f'uhubctl -l {hub} -p {port} -a {action}'
+        cmd = f'uhubctl -l {hub} -p {port} -a {action_enum.value}'
 
         print(f'> {cmd}')
         pipe = subprocess.Popen(
