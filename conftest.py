@@ -438,6 +438,17 @@ def _console_cb(msg):
     print(f'Console: {msg}')
 
 
+def pytest_runtest_makereport(item, call):
+    if call.when == "call" and call.excinfo is not None:
+        # Try to get the device fixture from the test function arguments
+        for arg in item.funcargs.values():
+            if isinstance(arg, BCDevice):
+                # Directly call the blocking power control method
+                arg.set_usb_power(USB_Power_Control_Action.RESET)
+                break
+        else:
+            print("No BCDevice found for power cycling.")
+
 class Requirements(dict):
     _instance = None
 
