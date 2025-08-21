@@ -467,7 +467,9 @@ def pytest_runtest_makereport(item, call):
         for arg in item.funcargs.values():
             if isinstance(arg, BCDevice):
                 # Directly call the blocking power control method
-                arg.set_usb_power(USB_Power_Control_Action.RESET)
+                arg.set_usb_power(USB_Power_Control_Action.OFF)
+                time.sleep(10)
+                arg.set_usb_power(USB_Power_Control_Action.ON)
                 break
         else:
             print("No BCDevice found for power cycling.")
