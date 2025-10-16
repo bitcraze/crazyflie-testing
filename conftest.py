@@ -257,7 +257,9 @@ class BCDevice:
             print(f'Error: {err.decode("utf-8")}')
 
         if returncode != 0:
-            raise RuntimeError(f'uhubctl command failed with exit code {returncode}')
+            raise subprocess.CalledProcessError(
+                returncode, cmd.split(' '), output=out, stderr=err
+            )
 
         return True
 
