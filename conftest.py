@@ -249,12 +249,15 @@ class BCDevice:
 
         out = pipe.stdout.read()
         err = pipe.stderr.read()
+        returncode = pipe.wait()
 
         if out:
             print(out.decode('utf-8'))
         if err:
             print(f'Error: {err.decode("utf-8")}')
-            return False
+
+        if returncode != 0:
+            raise RuntimeError(f'uhubctl command failed with exit code {returncode}')
 
         return True
 
