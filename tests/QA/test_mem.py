@@ -14,9 +14,8 @@
 from threading import Event
 import pytest
 from conftest import BCDevice
-from cflib.crazyflie.mem import MemoryElement
 
-
+@pytest.mark.skip(reason="Memory subsystem not available in Python bindings for Rust backend")
 class TestMem:
     def test_mem_ow(self, connected_bc_dev: BCDevice):
         '''

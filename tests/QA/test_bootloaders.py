@@ -17,6 +17,7 @@ import time
 from conftest import BCDevice
 
 
+@pytest.mark.skip(reason="Bootloader not available in Rust backend")
 class TestBootloaders:
     @staticmethod
     def bootloader_back_and_forth(dev: BCDevice):

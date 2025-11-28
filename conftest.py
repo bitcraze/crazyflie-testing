@@ -1,26 +1,19 @@
 from collections import namedtuple
 from enum import Enum
-import string
 import pytest
-import binascii
 import os
 import time
 import toml
 import glob
-import struct
 import sys
 import subprocess
 import logging
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
-from threading import Event
-from typing import Callable, List, NoReturn, Optional
+import threading
+from typing import List
+import tempfile
+from pathlib import Path
 
-import cflib
-from cflib.bootloader import Bootloader, Cloader, Target
-from cflib.crazyflie import Crazyflie
-from cflib.crtp.crtpstack import CRTPPacket
-from cflib.crtp.crtpstack import CRTPPort
-from cflib.utils.power_switch import PowerSwitch
+from cflib._rust import Crazyflie, FileTocCache
 
 from management.arduino_power_manager import RigManager
 
@@ -34,6 +27,10 @@ USB_Power_Control = namedtuple('Port', ['hub', 'port'])
 ALL_DECKS= ['bcLighthouse4', 'bcFlow2', 'bcMultiranger', 'bcUSD', 'bcAI', 'bcLoco']
 
 logger = logging.getLogger(__name__)
+
+# Initialize TOC cache using temp directory (same pattern as lib examples)
+CACHE_DIR = str(Path(tempfile.gettempdir()) / "crazyflie_toc_cache")
+TOC_CACHE = FileTocCache(CACHE_DIR)
 
 
 def pytest_generate_tests(metafunc):
@@ -87,12 +84,29 @@ class USB_Power_Control_Action(str, Enum):
     RESET  = 'reset'
 
 
+class BootloaderStub:
+    """Stub for bootloader functionality - not yet available in Rust backend"""
+
+    def __init__(self, link_uri):
+        self.link_uri = link_uri
+
+    def start_bootloader(self, warm_boot=False):
+        """Start the bootloader"""
+        raise NotImplementedError("Bootloader support not yet available in Rust backend")
+
+    def reset_to_firmware(self):
+        """Reset from bootloader back to firmware"""
+        raise NotImplementedError("Bootloader support not yet available in Rust backend")
+
+    def close(self):
+        """Close bootloader connection"""
+        raise NotImplementedError("Bootloader support not yet available in Rust backend")
+
+
 class BCDevice:
     CONNECT_TIMEOUT = 10  # seconds
 
     def __init__(self, name, device):
-        cflib.crtp.init_drivers()
-
         self.name = name
         self.link_uri = device['radio']
 
@@ -100,11 +114,17 @@ class BCDevice:
         self.power_manager = None
         self.boot_time = 0.5
         self.sync_cf = None
+        self._console_thread = None
+        self._console_running = False
+
+        # Bootloader support (stub until Rust backend implements it)
         try:
             self.bl_link_uri = device['bootloader_radio']
         except KeyError:
             self.bl_link_uri = None
-            pass
+
+        # Create bootloader stub
+        self.bl = BootloaderStub(self.bl_link_uri if self.bl_link_uri else self.link_uri)
 
         self.decks = []
         self.properties = []
@@ -124,14 +144,6 @@ class BCDevice:
         if 'rig_management_addr' in device:
             self.power_manager = device['rig_management_addr']
 
-
-    def start(self):
-        self.cf = Crazyflie(rw_cache='./cache')
-
-        self.cf.console.receivedChar.add_callback(_console_cb)
-
-        self.bl = Bootloader(self.link_uri)
-
     def __str__(self):
         string = '{} @ {}'.format(self.name, self.link_uri)
         if self.usb_power_control is not None:
@@ -139,99 +151,79 @@ class BCDevice:
             string += f' USB pwr-ctrl: [{hub}, {port}]'
         return string
 
+    def _start_console_polling(self):
+        """Start background thread to poll console output"""
+        def console_poll_loop():
+            while self._console_running:
+                try:
+                    if self.cf is not None:
+                        console = self.cf.console()
+                        lines = console.get_lines()
+                        for line in lines:
+                            print(f'Console: {line}')
+                except Exception:
+                    pass  # Ignore errors during shutdown
+                time.sleep(0.1)  # Poll every 100ms
+
+        self._console_running = True
+        self._console_thread = threading.Thread(target=console_poll_loop, daemon=True)
+        self._console_thread.start()
+
+    def _stop_console_polling(self):
+        """Stop console polling thread"""
+        self._console_running = False
+        if self._console_thread:
+            self._console_thread.join(timeout=1.0)
+            self._console_thread = None
+
+    def disconnect(self):
+        """Disconnect from the Crazyflie and clean up resources"""
+        if self.cf is not None:
+            self._stop_console_polling()
+            self.cf.disconnect()
+            self.cf = None
+
     def firmware_up(self) -> bool:
-        ''' Return true if we can contact the (stm32 based) firmware '''
-        timeout = 2  # seconds
-        link = cflib.crtp.get_link_driver(self.link_uri)
-
-        pk = CRTPPacket()
-        pk.set_header(CRTPPort.LINKCTRL, 0)  # Echo channel
-        pk.data = b'test'
-        link.send_packet(pk)
-
-        ts = time.time()
-        while True:
-            if time.time() - ts > timeout:
-                break
-
-            pk_ack = link.receive_packet(0.1)
-            if pk_ack is None:
-                continue
-
-            if pk_ack.port != CRTPPort.LINKCTRL or pk_ack.channel != 0:
-                continue
-
-            if pk.data == pk_ack.data:
-                link.close()
-                return True
-
-        return False
+        """Check if firmware is running"""
+        raise NotImplementedError("firmware_up() not yet migrated to Rust backend")
 
     def reboot(self):
-        switch = PowerSwitch(self.link_uri)
-        switch.stm_power_cycle()
+        """Reboot the Crazyflie"""
+        raise NotImplementedError("reboot() not yet migrated to Rust backend")
 
-    def recover(self):
-        if self.bl_link_uri is None:
-            return False
-
-        cloader = Cloader(None)
-        cloader.link = cflib.crtp.get_link_driver(self.bl_link_uri)
-        if cloader.link is None:
-            return False
-
-        status = cloader.reset_to_firmware(0xFE)  # nrf target_id
-        cloader.link.close()
-
-        return status
-
-    def power_cycle(self, rig_manager:RigManager=None):
+    def power_cycle(self, rig_manager:RigManager|None=None):
         if self.power_manager is not None and rig_manager is not None:
            rig_manager.restart(self.power_manager)
 
-    def goto_bootloader(self, rig_manager: RigManager=None):
-        self.bl.close()
-        self.bl = Bootloader(self.link_uri)
-        if self.power_manager is not None and rig_manager is not None:
-            print('Resetting to bootloader')
-            rig_manager.bootloader(self.power_manager)
-            time.sleep(2)
-
-
-    def flash(self, path: str, progress_cb: Optional[Callable[[str, int], NoReturn]] = None, rig_manager:RigManager = None) -> bool:
-        try:
-            if path.name.endswith(".bin"):
-                targets = [Target('cf2', 'stm32', 'fw', [], [])]
-            else:
-                targets = []
-            try:
-                self.power_cycle(rig_manager)
-                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
-                    enable_console_log=True, warm=True)
-            except Exception as e:
-                print(f'Failed to flash {path} to {self.name}. Resetting to bootloader and trying again')
-                self.goto_bootloader(rig_manager)
-                self.bl.flash_full(cf=self.cf, filename=path, progress_cb=progress_cb, targets=targets,
-                    enable_console_log=True, warm=False)
-                self.power_cycle(rig_manager)
-        finally:
-            self.bl.close()
-            self.bl = Bootloader(self.link_uri)
-
     def connect_sync(self, querystring=None):
+        """Connect to the Crazyflie using new synchronous API"""
         if querystring is None:
             uri = self.link_uri
         else:
             uri = self.link_uri + querystring
 
-        is_self_test_pass = False
-        is_connected = self._wait_for_full_connection(self.cf, uri, self.CONNECT_TIMEOUT)
-        if is_connected:
-            is_self_test_pass = _verify_cf_self_test_pass(self.cf, uri)
-        else:
-            print(f'Failed to connect to Crazyflie at {uri}')
+        try:
+            # Single synchronous call creates AND connects
+            self.cf = Crazyflie.connect_from_uri(uri, toc_cache=TOC_CACHE)
 
-        return is_connected and is_self_test_pass
+            # Start console polling thread
+            self._start_console_polling()
+
+            # Verify self-test passed
+            is_self_test_pass = _verify_cf_self_test_pass(self.cf, uri)
+
+            if not is_self_test_pass:
+                self._stop_console_polling()
+                self.cf.disconnect()
+                self.cf = None
+                return False
+
+            return True
+
+        except Exception as e:
+            print(f'Failed to connect to Crazyflie at {uri}: {e}')
+            self.cf = None
+            return False
 
     def set_usb_power(self, action: USB_Power_Control_Action) -> bool:
         if self.usb_power_control is None:
@@ -247,8 +239,8 @@ class BCDevice:
             stderr=subprocess.PIPE,
         )
 
-        out = pipe.stdout.read()
-        err = pipe.stderr.read()
+        out = pipe.stdout.read() if pipe.stdout else None
+        err = pipe.stderr.read() if pipe.stderr else None
         returncode = pipe.wait()
 
         if out:
@@ -263,7 +255,7 @@ class BCDevice:
 
         return True
 
-    def _parse_usb_power_control(self, device: dict) -> USB_Power_Control:
+    def _parse_usb_power_control(self, device: dict) -> USB_Power_Control| None:
         usb_power_control = device.get('usb_power_control')
         if usb_power_control is None:
             return None
@@ -271,72 +263,33 @@ class BCDevice:
         hub, port = usb_power_control.split(' ')
         return USB_Power_Control(hub, port)
 
-    def _wait_for_full_connection(self, cf: Crazyflie, uri: string, timeout: float) -> bool:
-        connection_event = Event()
-        def connection_cb(uri):
-            nonlocal connection_event
-            connection_event.set()
-
-        cf.fully_connected.add_callback(connection_cb)
-        cf.open_link(uri)
-        is_connection_success = connection_event.wait(timeout=timeout)
-        cf.fully_connected.remove_callback(connection_cb)
-
-        return is_connection_success
-
 @pytest.fixture
 def connected_bc_dev(request):
-    ''' This code will run before (and after) a test '''
+    """Provides a connected BCDevice for tests"""
     bcDev = request.param
-    bcDev.start() #Create the crazyflie object
-    with ValidatedSyncCrazyflie(bcDev.link_uri, cf=bcDev.cf) as cf:
-        bcDev.sync_cf = cf  # Update the cf in the BCDevice object
-        logger.info(f'Starting test with device {bcDev.name} @ {bcDev.link_uri}')
-        yield bcDev  # code after this point will run as teardown after test
-        bcDev.cf.close_link()
-    logger.info(f'Finished test with device {bcDev.name} @ {bcDev.link_uri}')
 
-@pytest.fixture
-def unconnected_bc_dev(request):
-    device = request.param
-    device.start()
-    yield device  # code after this point will run as teardown after test
-    device.cf.close_link()
+    # Connect to device (this also starts console polling)
+    logger.info(f'Connecting to device {bcDev.name} @ {bcDev.link_uri}')
+    if not bcDev.connect_sync():
+        pytest.fail(f'Failed to connect to {bcDev.name}')
 
-def get_bl_address(dev: BCDevice) -> str:
-    '''
-    Send the BOOTLOADER_CMD_RESET_INIT command to the NRF firmware
-    and receive the bootloader radio address in the response
-    '''
-    address = None
-    link = cflib.crtp.get_link_driver(dev.link_uri)
-    if link is None:
-        return None
+    # Set sync_cf for backwards compatibility with 2 tests that use it
+    # In Rust backend, cf is already synchronous, so just point to same object
+    bcDev.sync_cf = bcDev.cf
 
-    # 0xFF => BOOTLOADER CMD
-    # 0xFE => To the NRF firmware
-    # 0xFF => BOOTLOADER_CMD_RESET_INIT (to get bl address)
-    pk = CRTPPacket(0xFF, [0xFE, 0xFF])
-    link.send_packet(pk)
+    logger.info(f'Starting test with device {bcDev.name} @ {bcDev.link_uri}')
 
-    timeout = 5  # seconds
-    ts = time.time()
-    while time.time() - ts < timeout:
-        pk = link.receive_packet(2)
-        if pk is None:
-            continue
+    try:
+        yield bcDev
+    finally:
+        # Cleanup
+        if bcDev.cf is not None:
+            logger.info(f'Disconnecting from device {bcDev.name}')
+            bcDev._stop_console_polling()
+            bcDev.cf.disconnect()
+            bcDev.cf = None
 
-        # Header 0xFF means port is 0xF ((header & 0xF0) >> 4)) and channel
-        # is 0x3 (header & 0x03).
-        if pk.port == 0xF and pk.channel == 0x3 and len(pk.data) > 3:
-            # 0xFE is NRF target id, 0xFF is BOOTLOADER_CMD_RESET_INIT
-            if struct.unpack('<BB', pk.data[0:2]) != (0xFE, 0xFF):
-                continue
-            address = 'B1' + binascii.hexlify(pk.data[2:6][::-1]).upper().decode('utf8')  # noqa
-            break
-
-    return address
-
+        logger.info(f'Finished test with device {bcDev.name} @ {bcDev.link_uri}')
 
 def get_devices(has_decks: List[str]=[], has_properties: List[str]=[], exclude_decks= []) -> List[BCDevice]:
     devices = list()
@@ -423,13 +376,18 @@ def get_swarm() -> List[BCDevice]:
 
 
 def _verify_cf_self_test_pass(cf: Crazyflie, uri: str) -> bool:
-    is_self_test_pass = bool(int(cf.param.get_value('system.selftestPassed')))
+    # Get param subsystem (returns Param object)
+    param = cf.param()
+
+    # Use .get() instead of .get_value()
+    is_self_test_pass = bool(int(param.get('system.selftestPassed')))
 
     if not is_self_test_pass:
         print(f'The Crazyflie did not pass self tests ({uri})')
 
         # Trigger a dump of assert info
-        cf.param.set_value('system.assertInfo', 1)
+        # Use .set() instead of .set_value()
+        param.set('system.assertInfo', 1)
 
         # Wait a bit for all console logs to arrive
         time.sleep(0.5)
@@ -437,10 +395,6 @@ def _verify_cf_self_test_pass(cf: Crazyflie, uri: str) -> bool:
         # Console logs are captured and printed by default, but are only displayed when a test case fails.
 
     return is_self_test_pass
-
-def _console_cb(msg):
-    # Prints are only displayed if a dest fails
-    print(f'Console: {msg}')
 
 
 class Requirements(dict):
@@ -474,25 +428,3 @@ class Requirements(dict):
 def get_requirement(requirement: str):
     group, name = requirement.split('.')
     return Requirements.instance()['requirement'][group][name]
-
-
-class ValidatedSyncCrazyflie(SyncCrazyflie):
-    """Use this class instead of SyncCrazyflie in tests. This class does extra checks when connecting to make sure
-    the CF is OK.
-    """
-    def __init__(self, link_uri: str, cf=None):
-        super().__init__(link_uri, cf=cf)
-
-    def __enter__(self):
-        self.open_link()
-
-        self.cf.console.receivedChar.add_callback(_console_cb)
-
-        is_self_test_pass = _verify_cf_self_test_pass(self.cf, self._link_uri)
-        assert is_self_test_pass
-
-        return self
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        logger.info('Exciting')
-        self.cf.console.receivedChar.remove_callback(_console_cb)
-        super().__exit__(exc_type, exc_val, exc_tb)

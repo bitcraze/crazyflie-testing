@@ -13,8 +13,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 import pytest
 import conftest
-from cflib.crazyflie.log import LogConfig
-from cflib.crazyflie.syncLogger import SyncLogger
 from conftest import ALL_DECKS, BCDevice
 
 #
@@ -32,9 +30,10 @@ class TestDecks:
         Check that all decks defined for the device in the site
         is detected, using the parameter interface. 
         '''
+        assert connected_bc_dev.cf
 
         for deck in ALL_DECKS:
-            is_deck_present = int(connected_bc_dev.cf.param.get_value(f'deck.{deck}'))
+            is_deck_present = int(connected_bc_dev.cf.param().get(f'deck.{deck}'))
             if deck in connected_bc_dev.decks:
                 assert is_deck_present, f'Deck {deck} is not present'
             else:
@@ -49,19 +48,23 @@ class TestDecks:
         bus.
         '''
 
-
         READ_LOG = 'loco.spiRe'
         WRITE_LOG = 'loco.spiWr'
 
-        log_config = LogConfig(name='locodeck', period_in_ms=10)
-        log_config.add_variable(READ_LOG, 'float')
-        log_config.add_variable(WRITE_LOG, 'float')
+        log = connected_bc_dev.cf.log()
+        block = log.create_block()
+        block.add_variable(READ_LOG)
+        block.add_variable(WRITE_LOG)
 
-        with SyncLogger(connected_bc_dev.cf, log_config) as logger:
-            for entry in logger:
-                read_rate = entry[1][READ_LOG]
-                write_rate = entry[1][WRITE_LOG]
+        log_stream = block.start(10)  # 10ms period
+        try:
+            data = log_stream.next()
+            values = data["data"]
+            
+            read_rate = values[READ_LOG]
+            write_rate = values[WRITE_LOG]
 
-                assert read_rate > 10.0
-                assert write_rate > 10.0
-                break
+            assert read_rate > 10.0
+            assert write_rate > 10.0
+        finally:
+            log_stream.stop()
