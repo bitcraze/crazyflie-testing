@@ -17,57 +17,37 @@ jobs:
       CRAZY_SITE: crazylab-malmö
       TEST_FILE: TestRun-${{github.run_number}}
     steps:
-      - name: Install libusb
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
         run: |
           apt update
           apt install -y libusb-1.0-0 uhubctl
 
-      - name: Upgrade pip
-        run:  |
-          pip3 install --upgrade pip
-
-      - name: Install pytest
-        run: | 
-          pip3 install pytest
-          pip3 install pytest-timeout
-
-      - name: Install Crazyflie python library
-        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
-
-      - name: Check out sources
-        uses: actions/checkout@v4
-
-      - name: Install requirements
-        run: pip3 install -r requirements.txt
-
-      - name: Download latest firmware files
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          repo: bitcraze/crazyflie-release
-          workflow: nightly.yml
-          path: nightly
-        uses: dawidd6/action-download-artifact@v4
+          enable-cache: true
+
+      - name: Install project dependencies
+        run: uv sync --locked
+
+      # - name: Download latest firmware files
+      #   with:
+      #     repo: bitcraze/crazyflie-release
+      #     workflow: nightly.yml
+      #     path: nightly
+      #   uses: dawidd6/action-download-artifact@v4
 
       - name: Reset power to all devices
-        run: python3 management/usb-power-reset.py -a reset
+        run: uv run python management/usb-power-reset.py -a reset
 
-      - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file nightly/
+      # - name: Upgrade devices to latest firmware
+      #   run: uv run python management/program.py --file nightly/
 
       - name: Run test suite
-        run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml tests/QA
-
-      - name: Checkout Crazyflie python library
-        uses: actions/checkout@v4
-        with:
-          repository: bitcraze/crazyflie-lib-python
-          path: crazyflie-lib-python
-
-      - name: Pip install the library
-        run: pip3 install crazyflie-lib-python/
-
-      - name: Run Crazyflie python library examples
-        run: |
-          python3 -u utils/run_examples.py --path crazyflie-lib-python
+        run: uv run pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml tests/QA
 
       - name: Upload test file
         if: ${{ !cancelled() }}

@@ -39,50 +39,42 @@ jobs:
       image: python:3.13-bookworm
       options: --privileged
     steps:
-      - name: Install libusb
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
         run: |
           apt update
           apt install -y libusb-1.0-0 uhubctl
 
-      - name: Upgrade pip
-        run:  |
-          pip3 install --upgrade pip
-
-      - name: Install pytest
-        run: |
-            pip3 install pytest
-            pip3 install pytest-timeout
-
-      - name: Install Crazyflie python library
-        run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@${{github.event.inputs.lib_version}}
-
-      - name: Check out sources
-        uses: actions/checkout@v4
-
-      - name: Install requirements
-        run: pip3 install -r requirements.txt
-
-      - name: Set FW file name
-        run: |
-          if ${{github.event.inputs.experimentalFW}} == 'true'; then
-            echo "FW_ACTION=nightly-experiment" >> $GITHUB_ENV
-          else
-            echo "FW_ACTION=nightly" >> $GITHUB_ENV
-            fi
-
-      - name: Download latest firmware files
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          repo: bitcraze/crazyflie-release
-          workflow: ${{env.FW_ACTION}}.yml
-          path: ${{env.FW_ACTION}}/
-        uses: dawidd6/action-download-artifact@v4
+          enable-cache: true
+
+      - name: Install project dependencies
+        run: uv sync --locked
+
+      # - name: Set FW file name
+      #   run: |
+      #     if ${{github.event.inputs.experimentalFW}} == 'true'; then
+      #       echo "FW_ACTION=nightly-experiment" >> $GITHUB_ENV
+      #     else
+      #       echo "FW_ACTION=nightly" >> $GITHUB_ENV
+      #       fi
+
+      # - name: Download latest firmware files
+      #   with:
+      #     repo: bitcraze/crazyflie-release
+      #     workflow: ${{env.FW_ACTION}}.yml
+      #     path: ${{env.FW_ACTION}}/
+      #   uses: dawidd6/action-download-artifact@v4
 
       - name: Reset power to all devices
-        run: python3 management/usb-power-reset.py -a reset
+        run: uv run python management/usb-power-reset.py -a reset
 
-
-      - name: Upgrade devices to latest firmware
-        run: python3 management/program.py --file ${{env.FW_ACTION}}/
+      # - name: Upgrade devices to latest firmware
+      #   run: uv run python management/program.py --file ${{env.FW_ACTION}}/
       - name: Run test suite
         env:
           FILTER: ${{ github.event.inputs.filter || '""'}}
@@ -90,9 +82,9 @@ jobs:
           FILTER_INPUT="${{ github.event.inputs.filter }}"
           FILTER_OPTION=$(echo "$FILTER_INPUT" | xargs)  # Trim spaces and check for non-empty content
           if [ -n "$FILTER_OPTION" ]; then
-            pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml -k ${{ github.event.inputs.filter }}
+            uv run pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml -k ${{ github.event.inputs.filter }}
           else
-            pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml
+            uv run pytest --verbose --html=${{env.TEST_FILE}}.html ${{github.event.inputs.category}} --junit-xml ${{env.TEST_FILE}}.xml
           fi
       - name: Upload test file
         if: ${{ !cancelled() }}

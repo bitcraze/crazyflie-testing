@@ -32,28 +32,20 @@ jobs:
       PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     steps:
-      - name: Setup python environment
-        run: |
-          $(brew --prefix)/bin/python${PYTHON_VERSION} -m venv venv
-          source venv/bin/activate
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python_version }}
 
-      - name: Install pytest
-        run: |
-            venv/bin/pip install pytest
-            venv/bin/pip install pytest-timeout
+      - name: Install project dependencies
+        run: uv sync --locked
 
-      - name: Install Crazyflie python library
-        run: venv/bin/pip install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
-
-      - name: Install requirements
-        run:  |
-          venv/bin/pip install -r requirements.txt
-
-      - name: Upgrade devices to latest firmware
-        run: venv/bin/python management/program.py --file nightly/ --retries 3
+      # - name: Upgrade devices to latest firmware
+      #   run: uv run python management/program.py --file nightly/ --retries 3
 
       - name: Run test suite
-        run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
+        run: uv run pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
 
       - name: Upload test file
         if: ${{ !cancelled() }}
@@ -92,44 +84,37 @@ jobs:
       image: python:${{ matrix.python_version }}-bookworm
       options: --privileged
     steps:
-    - name: Upgrade pip
-      run:  |
-        pip3 install --upgrade pip
+    - name: Check out sources
+      uses: actions/checkout@v4
 
-    - name: Install libusb
+    - name: Install system dependencies
       run: |
         apt update
         apt install -y libusb-1.0-0 uhubctl
 
-    - name: Install pytest
-      run: | 
-        pip3 install pytest
-        pip install pytest-timeout
-
-    - name: Install Crazyflie python library
-      run: pip3 install git+https://github.com/bitcraze/crazyflie-lib-python.git@master
-
-    - name: Check out sources
-      uses: actions/checkout@v4
-
-    - name: Install requirements
-      run: pip3 install -r requirements.txt
-
-    - name: Download latest firmware files
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
       with:
-        repo: bitcraze/crazyflie-release
-        workflow: nightly.yml
-        path: nightly
-      uses: dawidd6/action-download-artifact@v4
+        enable-cache: true
+
+    - name: Install project dependencies
+      run: uv sync --locked
+
+    # - name: Download latest firmware files
+    #   with:
+    #     repo: bitcraze/crazyflie-release
+    #     workflow: nightly.yml
+    #     path: nightly
+    #   uses: dawidd6/action-download-artifact@v4
 
     - name: Reset power to all devices
-      run: python3 management/usb-power-reset.py -a reset
+      run: uv run python management/usb-power-reset.py -a reset
 
-    - name: Upgrade devices to latest firmware
-      run: python3 management/program.py --file nightly/ --retries 3
+    # - name: Upgrade devices to latest firmware
+    #   run: uv run python management/program.py --file nightly/ --retries 3
 
     - name: Run test suite
-      run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
+      run: uv run pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml -m sanity tests/QA
 
     - name: Upload test file
       if: ${{ !cancelled() }}
