@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-crazyflie-lib = { git = "https://github.com/bitcraze/crazyflie-lib-rs" }
-crazyflie-link = "0.3.0"
+crazyflie-lib = "0.5.1"
+crazyflie-link = "0.4.0"
 tokio = { version = "1.48", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
