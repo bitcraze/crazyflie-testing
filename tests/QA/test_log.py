@@ -22,7 +22,6 @@ from conftest import BCDevice
 class TestLogVariables:
 
     @pytest.mark.sanity
-    @pytest.mark.exclude_decks('bcAI') #This fails with the ai deck sometimes. Flakyness.
     def test_log_async(self, connected_bc_dev: BCDevice):
         ''' Make sure we receive ~100 rows 1 second at 100Hz '''
         requirement = conftest.get_requirement('logging.basic')
@@ -159,7 +158,6 @@ class TestLogVariables:
         actual_total_rate = sum(packets.values()) / duration
         assert_within_percentage(expected_total_rate, actual_total_rate, 3)
 
-    @pytest.mark.exclude_decks('bcAI')
     def test_log_sync(self, connected_bc_dev: BCDevice):
         ''' Make sure logging synchronous works '''
         requirement = conftest.get_requirement('logging.basic')
