@@ -2,3 +2,5 @@ __pycache__/
 .vscode/settings.json
 /*.xml
 target
+uv.lock
+Cargo.lock
