@@ -204,6 +204,6 @@ def assert_variables_included(data):
 
 
 def assert_within_percentage(expected: float, actual: float, max_diff_percent: float):
-    max_diff = expected * max_diff_percent
+    max_diff = expected * (max_diff_percent / 100.0)
     assert actual >= expected - max_diff
     assert actual <= expected + max_diff
