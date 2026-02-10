@@ -10,32 +10,24 @@ use serial_test::serial;
 async fn test_can_connect_to_crazyflie() -> Result<()> {
     common::init_logging();
 
-    // Load site config (shared with Python tests)
     let site_config = common::load_site_config()?;
+    let devices = common::get_devices(&site_config);
+    assert!(!devices.is_empty(), "No devices in site config");
 
-    // Get the first device
-    let device = site_config
-        .device
-        .get("default")
-        .expect("No 'default' device in site config");
+    for (name, device) in &devices {
+        println!("\n[{}] Connecting to: {}", name, device.radio);
 
-    println!("Connecting to: {}", device.radio);
+        let link_context = LinkContext::new();
+        let cf = Crazyflie::connect_from_uri(&link_context, &device.radio, NoTocCache)
+            .await?;
 
-    // Create link context and connect (TOC cache is handled internally)
-    let link_context = LinkContext::new();
+        println!("[{}] Connected successfully!", name);
 
-    // Connect to Crazyflie (using NoTocCache for simplicity in tests)
-    let cf = Crazyflie::connect_from_uri(&link_context, &device.radio, NoTocCache)
-        .await?;
+        assert!(cf.platform.protocol_version().await? > 0);
 
-    println!("Connected successfully!");
-
-    // Verify we can access platform info
-    assert!(cf.platform.protocol_version().await? > 0);
-
-    // Disconnect
-    cf.disconnect().await;
-    println!("Disconnected successfully!");
+        cf.disconnect().await;
+        println!("[{}] Disconnected successfully!", name);
+    }
 
     Ok(())
 }

@@ -155,3 +155,55 @@ pub async fn connect_crazyflie(ctx: &LinkContext, uri: &str) -> Result<Crazyflie
 pub fn init_logging() {
     let _ = env_logger::builder().is_test(true).try_init();
 }
+
+/// Logging requirements from requirements/logging.toml
+#[derive(Debug, Deserialize)]
+pub struct RequirementFile {
+    pub requirement: RequirementGroup,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RequirementGroup {
+    pub logging: LoggingRequirements,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoggingRequirements {
+    pub basic: LoggingBasic,
+    pub variables: LoggingVariables,
+    pub blocks: LoggingBlocks,
+    pub rate: LoggingRate,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoggingBasic {
+    pub max_rate: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoggingVariables {
+    pub max: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoggingBlocks {
+    pub max: u32,
+    pub max_payload: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoggingRate {
+    pub limit_low: u32,
+}
+
+/// Load logging requirements from requirements/logging.toml
+pub fn load_logging_requirements() -> Result<LoggingRequirements> {
+    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("requirements");
+    path.push("logging.toml");
+
+    let contents = fs::read_to_string(&path)?;
+    let file: RequirementFile = toml::from_str(&contents)?;
+
+    Ok(file.requirement.logging)
+}

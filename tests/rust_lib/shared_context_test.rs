@@ -11,92 +11,88 @@ async fn test_concurrent_operations_on_shared_connection() -> Result<()> {
     common::init_logging();
 
     let site_config = common::load_site_config()?;
-    let device = site_config
-        .device
-        .get("default")
-        .expect("No 'default' device in site config");
+    let devices = common::get_devices(&site_config);
+    assert!(!devices.is_empty(), "No devices in site config");
 
-    println!("Connecting to: {}", device.radio);
+    for (name, device) in &devices {
+        println!("\n[{}] Connecting to: {}", name, device.radio);
 
-    let link_context = LinkContext::new();
-    let cf = Arc::new(
-        Crazyflie::connect_from_uri(&link_context, &device.radio, NoTocCache)
-            .await?
-    );
+        let link_context = LinkContext::new();
+        let cf = Arc::new(
+            Crazyflie::connect_from_uri(&link_context, &device.radio, NoTocCache)
+                .await?
+        );
 
-    println!("Connected! Now running concurrent operations...");
+        println!("[{}] Connected! Now running concurrent operations...", name);
 
-    // Spawn multiple concurrent tasks that all use the same connection
-    let cf1 = cf.clone();
-    let task1 = tokio::spawn(async move {
-        println!("[Task 1] Reading protocol version...");
-        let version = cf1.platform.protocol_version().await?;
-        println!("[Task 1] Protocol version: {}", version);
-        Ok::<_, anyhow::Error>(version)
-    });
+        let dev_name = name.clone();
+        let cf1 = cf.clone();
+        let task1 = tokio::spawn(async move {
+            println!("[{}][Task 1] Reading protocol version...", dev_name);
+            let version = cf1.platform.protocol_version().await?;
+            println!("[{}][Task 1] Protocol version: {}", dev_name, version);
+            Ok::<_, anyhow::Error>(version)
+        });
 
-    let cf2 = cf.clone();
-    let task2 = tokio::spawn(async move {
-        println!("[Task 2] Reading firmware version...");
-        let fw_version = cf2.platform.firmware_version().await?;
-        println!("[Task 2] Firmware version: {}", fw_version);
-        Ok::<_, anyhow::Error>(fw_version)
-    });
+        let dev_name = name.clone();
+        let cf2 = cf.clone();
+        let task2 = tokio::spawn(async move {
+            println!("[{}][Task 2] Reading firmware version...", dev_name);
+            let fw_version = cf2.platform.firmware_version().await?;
+            println!("[{}][Task 2] Firmware version: {}", dev_name, fw_version);
+            Ok::<_, anyhow::Error>(fw_version)
+        });
 
-    let cf3 = cf.clone();
-    let task3 = tokio::spawn(async move {
-        println!("[Task 3] Reading device type...");
-        let device_type = cf3.platform.device_type_name().await?;
-        println!("[Task 3] Device type: {}", device_type);
-        Ok::<_, anyhow::Error>(device_type)
-    });
+        let dev_name = name.clone();
+        let cf3 = cf.clone();
+        let task3 = tokio::spawn(async move {
+            println!("[{}][Task 3] Reading device type...", dev_name);
+            let device_type = cf3.platform.device_type_name().await?;
+            println!("[{}][Task 3] Device type: {}", dev_name, device_type);
+            Ok::<_, anyhow::Error>(device_type)
+        });
 
-    let cf4 = cf.clone();
-    let task4 = tokio::spawn(async move {
-        println!("[Task 4] Creating and starting log block...");
+        let dev_name = name.clone();
+        let cf4 = cf.clone();
+        let task4 = tokio::spawn(async move {
+            println!("[{}][Task 4] Creating and starting log block...", dev_name);
 
-        // Create a log block
-        let mut log_block = cf4.log.create_block().await?;
-        log_block.add_variable("stabilizer.roll").await?;
-        log_block.add_variable("stabilizer.pitch").await?;
-        log_block.add_variable("stabilizer.yaw").await?;
+            let mut log_block = cf4.log.create_block().await?;
+            log_block.add_variable("stabilizer.roll").await?;
+            log_block.add_variable("stabilizer.pitch").await?;
+            log_block.add_variable("stabilizer.yaw").await?;
 
-        // Start logging
-        let period = LogPeriod::from_millis(100)?;
-        let stream = log_block.start(period).await?;
+            let period = LogPeriod::from_millis(100)?;
+            let stream = log_block.start(period).await?;
 
-        println!("[Task 4] Log block started, reading one sample...");
+            println!("[{}][Task 4] Log block started, reading one sample...", dev_name);
 
-        // Read one sample
-        let sample = stream.next().await?;
-        println!("[Task 4] Got log sample: {:?}", sample);
+            let sample = stream.next().await?;
+            println!("[{}][Task 4] Got log sample: {:?}", dev_name, sample);
 
-        // Stop logging
-        let _block = stream.stop().await?;
-        println!("[Task 4] Log block stopped");
+            let _block = stream.stop().await?;
+            println!("[{}][Task 4] Log block stopped", dev_name);
 
-        Ok::<_, anyhow::Error>(())
-    });
+            Ok::<_, anyhow::Error>(())
+        });
 
-    // Wait for all tasks to complete
-    let (r1, r2, r3, r4) = tokio::try_join!(task1, task2, task3, task4)?;
+        let (r1, r2, r3, r4) = tokio::try_join!(task1, task2, task3, task4)?;
 
-    // Check results
-    let protocol_version = r1?;
-    let firmware_version = r2?;
-    let device_type = r3?;
-    r4?;
+        let protocol_version = r1?;
+        let firmware_version = r2?;
+        let device_type = r3?;
+        r4?;
 
-    println!("\nAll concurrent operations completed successfully!");
-    println!("  Protocol version: {}", protocol_version);
-    println!("  Firmware version: {}", firmware_version);
-    println!("  Device type: {}", device_type);
+        println!("\n[{}] All concurrent operations completed!", name);
+        println!("[{}]   Protocol version: {}", name, protocol_version);
+        println!("[{}]   Firmware version: {}", name, firmware_version);
+        println!("[{}]   Device type: {}", name, device_type);
 
-    assert!(protocol_version > 0);
+        assert!(protocol_version > 0);
 
-    // Disconnect
-    cf.disconnect().await;
-    println!("Disconnected successfully!");
+        cf.disconnect().await;
+        println!("[{}] Disconnected successfully!", name);
+    }
 
     Ok(())
 }

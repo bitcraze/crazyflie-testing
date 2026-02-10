@@ -31,3 +31,7 @@ path = "tests/rust_lib/swarm_test.rs"
 [[test]]
 name = "toc_cache_test"
 path = "tests/rust_lib/toc_cache_test.rs"
+
+[[test]]
+name = "log_test"
+path = "tests/rust_lib/log_test.rs"
