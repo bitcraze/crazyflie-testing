@@ -41,11 +41,12 @@ def pytest_generate_tests(metafunc):
     has_properties = has_properties.args if has_properties else []
     exclude_decks = exclude_decks.args if exclude_decks else []
     devices = get_devices(has_decks,has_properties, exclude_decks)
+    device_fixtures = {'connected_bc_dev', 'unconnected_bc_dev'}
     for fixture in metafunc.fixturenames:
-        if fixture == 'request':
+        if fixture not in device_fixtures:
             continue
         if devices:
-            metafunc.parametrize(fixture, devices, indirect=(fixture==fixture) , ids=lambda d: d.name)
+            metafunc.parametrize(fixture, devices, indirect=True, ids=lambda d: d.name)
         else:
             print(f'No devices found for test {metafunc.definition.name}')
             metafunc.parametrize(fixture, [pytest.param(None, marks=pytest.mark.ignore(reason="No device for test"))]) #This is a bit overly complicated but pytest.skip will skip all tests in modul
