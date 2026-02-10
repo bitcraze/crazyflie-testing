@@ -2,18 +2,17 @@ from collections import namedtuple
 from enum import Enum
 import pytest
 import os
-import time
 import toml
 import glob
 import sys
 import subprocess
 import logging
-import threading
+import asyncio
 from typing import List
 import tempfile
 from pathlib import Path
 
-from cflib._rust import Crazyflie, FileTocCache
+from cflib._rust import Crazyflie, FileTocCache, LinkContext
 
 from management.arduino_power_manager import RigManager
 
@@ -31,6 +30,7 @@ logger = logging.getLogger(__name__)
 # Initialize TOC cache using temp directory (same pattern as lib examples)
 CACHE_DIR = str(Path(tempfile.gettempdir()) / "crazyflie_toc_cache")
 TOC_CACHE = FileTocCache(CACHE_DIR)
+LINK_CONTEXT = LinkContext()
 
 
 def pytest_generate_tests(metafunc):
@@ -114,8 +114,7 @@ class BCDevice:
         self.power_manager = None
         self.boot_time = 0.5
         self.sync_cf = None
-        self._console_thread = None
-        self._console_running = False
+        self._console_task = None
 
         # Bootloader support (stub until Rust backend implements it)
         try:
@@ -152,35 +151,39 @@ class BCDevice:
         return string
 
     def _start_console_polling(self):
-        """Start background thread to poll console output"""
-        def console_poll_loop():
-            while self._console_running:
+        """Start async task to poll console output"""
+        self._console_task = asyncio.create_task(self._console_poll_loop())
+
+    async def _console_poll_loop(self):
+        """Poll console output in the background"""
+        try:
+            console = self.cf.console()
+            while True:
                 try:
-                    if self.cf is not None:
-                        console = self.cf.console()
-                        lines = console.get_lines()
-                        for line in lines:
-                            print(f'Console: {line}')
+                    lines = await console.get_lines()
+                    for line in lines:
+                        print(f'Console: {line}')
                 except Exception:
                     pass  # Ignore errors during shutdown
-                time.sleep(0.1)  # Poll every 100ms
+                await asyncio.sleep(0.1)
+        except asyncio.CancelledError:
+            pass
 
-        self._console_running = True
-        self._console_thread = threading.Thread(target=console_poll_loop, daemon=True)
-        self._console_thread.start()
+    async def _stop_console_polling(self):
+        """Stop console polling task"""
+        if self._console_task:
+            self._console_task.cancel()
+            try:
+                await self._console_task
+            except asyncio.CancelledError:
+                pass
+            self._console_task = None
 
-    def _stop_console_polling(self):
-        """Stop console polling thread"""
-        self._console_running = False
-        if self._console_thread:
-            self._console_thread.join(timeout=1.0)
-            self._console_thread = None
-
-    def disconnect(self):
+    async def disconnect(self):
         """Disconnect from the Crazyflie and clean up resources"""
         if self.cf is not None:
-            self._stop_console_polling()
-            self.cf.disconnect()
+            await self._stop_console_polling()
+            await self.cf.disconnect()
             self.cf = None
 
     def firmware_up(self) -> bool:
@@ -195,26 +198,25 @@ class BCDevice:
         if self.power_manager is not None and rig_manager is not None:
            rig_manager.restart(self.power_manager)
 
-    def connect_sync(self, querystring=None):
-        """Connect to the Crazyflie using new synchronous API"""
+    async def connect(self, querystring=None):
+        """Connect to the Crazyflie"""
         if querystring is None:
             uri = self.link_uri
         else:
             uri = self.link_uri + querystring
 
         try:
-            # Single synchronous call creates AND connects
-            self.cf = Crazyflie.connect_from_uri(uri, toc_cache=TOC_CACHE)
+            self.cf = await Crazyflie.connect_from_uri(LINK_CONTEXT, uri, toc_cache=TOC_CACHE)
 
-            # Start console polling thread
+            # Start console polling task
             self._start_console_polling()
 
             # Verify self-test passed
-            is_self_test_pass = _verify_cf_self_test_pass(self.cf, uri)
+            is_self_test_pass = await _verify_cf_self_test_pass(self.cf, uri)
 
             if not is_self_test_pass:
-                self._stop_console_polling()
-                self.cf.disconnect()
+                await self._stop_console_polling()
+                await self.cf.disconnect()
                 self.cf = None
                 return False
 
@@ -264,17 +266,15 @@ class BCDevice:
         return USB_Power_Control(hub, port)
 
 @pytest.fixture
-def connected_bc_dev(request):
+async def connected_bc_dev(request):
     """Provides a connected BCDevice for tests"""
     bcDev = request.param
 
     # Connect to device (this also starts console polling)
     logger.info(f'Connecting to device {bcDev.name} @ {bcDev.link_uri}')
-    if not bcDev.connect_sync():
+    if not await bcDev.connect():
         pytest.fail(f'Failed to connect to {bcDev.name}')
 
-    # Set sync_cf for backwards compatibility with 2 tests that use it
-    # In Rust backend, cf is already synchronous, so just point to same object
     bcDev.sync_cf = bcDev.cf
 
     logger.info(f'Starting test with device {bcDev.name} @ {bcDev.link_uri}')
@@ -285,8 +285,8 @@ def connected_bc_dev(request):
         # Cleanup
         if bcDev.cf is not None:
             logger.info(f'Disconnecting from device {bcDev.name}')
-            bcDev._stop_console_polling()
-            bcDev.cf.disconnect()
+            await bcDev._stop_console_polling()
+            await bcDev.cf.disconnect()
             bcDev.cf = None
 
         logger.info(f'Finished test with device {bcDev.name} @ {bcDev.link_uri}')
@@ -375,22 +375,20 @@ def get_swarm() -> List[BCDevice]:
     return devices
 
 
-def _verify_cf_self_test_pass(cf: Crazyflie, uri: str) -> bool:
+async def _verify_cf_self_test_pass(cf: Crazyflie, uri: str) -> bool:
     # Get param subsystem (returns Param object)
     param = cf.param()
 
-    # Use .get() instead of .get_value()
-    is_self_test_pass = bool(int(param.get('system.selftestPassed')))
+    is_self_test_pass = bool(int(await param.get('system.selftestPassed')))
 
     if not is_self_test_pass:
         print(f'The Crazyflie did not pass self tests ({uri})')
 
         # Trigger a dump of assert info
-        # Use .set() instead of .set_value()
-        param.set('system.assertInfo', 1)
+        await param.set('system.assertInfo', 1)
 
         # Wait a bit for all console logs to arrive
-        time.sleep(0.5)
+        await asyncio.sleep(0.5)
 
         # Console logs are captured and printed by default, but are only displayed when a test case fails.
 

@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class TestParameters:
     @pytest.mark.sanity
-    def test_param_ronly(self,connected_bc_dev: BCDevice):
+    async def test_param_ronly(self,connected_bc_dev: BCDevice):
             # Get a known (core) read-only parameter
             param_name = "deck.bcLighthouse4"
             param = connected_bc_dev.cf.param()
@@ -37,7 +37,7 @@ class TestParameters:
 
             # # Read-only parameters should raise an error when trying to set them
             # with pytest.raises(Exception):  # Rust backend raises general exception for read-only params
-            #     param.set(param_name, 1)
+            #     await param.set(param_name, 1)
 
     @pytest.mark.skip(reason="Parameter TOC metadata (is_extended, is_persistent) not available in Rust backend")
     def test_param_extended_type(self, connected_bc_dev: BCDevice):
@@ -327,28 +327,28 @@ class TestParameters:
 
         assert updated
 
-    def test_param_set(self,connected_bc_dev:BCDevice):
+    async def test_param_set(self,connected_bc_dev:BCDevice):
         assert connected_bc_dev.cf
 
         # stabilizer.estimator is an integer-typed parameter
         int_param_name = "stabilizer.estimator"
         param = connected_bc_dev.cf.param()
 
-        initial = param.get(int_param_name)
+        initial = await param.get(int_param_name)
         assert initial is not None
 
         # Test setting integer param with integer value
-        param.set(int_param_name, 2)
-        assert param.get(int_param_name) == 2
+        await param.set(int_param_name, 2)
+        assert await param.get(int_param_name) == 2
 
         # Test setting integer param with different integer value
-        param.set(int_param_name, 1)
-        assert param.get(int_param_name) == 1
+        await param.set(int_param_name, 1)
+        assert await param.get(int_param_name) == 1
 
         # Integer params should reject float values
         with pytest.raises(TypeError):
-            param.set(int_param_name, 1.0)
+            await param.set(int_param_name, 1.0)
 
         # Restore initial value
-        param.set(int_param_name, int(initial))
-        assert param.get(int_param_name) == int(initial)
+        await param.set(int_param_name, int(initial))
+        assert await param.get(int_param_name) == int(initial)

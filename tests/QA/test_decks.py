@@ -25,15 +25,16 @@ from conftest import ALL_DECKS, BCDevice
 
 class TestDecks:
 
-    def test_deck_present(self, connected_bc_dev: BCDevice):
+    async def test_deck_present(self, connected_bc_dev: BCDevice):
         '''
         Check that all decks defined for the device in the site
-        is detected, using the parameter interface. 
+        is detected, using the parameter interface.
         '''
         assert connected_bc_dev.cf
 
+        param = connected_bc_dev.cf.param()
         for deck in ALL_DECKS:
-            is_deck_present = int(connected_bc_dev.cf.param().get(f'deck.{deck}'))
+            is_deck_present = int(await param.get(f'deck.{deck}'))
             if deck in connected_bc_dev.decks:
                 assert is_deck_present, f'Deck {deck} is not present'
             else:
@@ -42,7 +43,7 @@ class TestDecks:
 
 
     @pytest.mark.decks("bcLoco")
-    def test_loco_deck_loop_is_running(self, connected_bc_dev: BCDevice):
+    async def test_loco_deck_loop_is_running(self, connected_bc_dev: BCDevice):
         '''
         Check that the event loop in the loco deck driver is running, this is indicated by read and writes to the SPI
         bus.
@@ -52,19 +53,19 @@ class TestDecks:
         WRITE_LOG = 'loco.spiWr'
 
         log = connected_bc_dev.cf.log()
-        block = log.create_block()
-        block.add_variable(READ_LOG)
-        block.add_variable(WRITE_LOG)
+        block = await log.create_block()
+        await block.add_variable(READ_LOG)
+        await block.add_variable(WRITE_LOG)
 
-        log_stream = block.start(10)  # 10ms period
+        log_stream = await block.start(10)  # 10ms period
         try:
-            data = log_stream.next()
+            data = await log_stream.next()
             values = data["data"]
-            
+
             read_rate = values[READ_LOG]
             write_rate = values[WRITE_LOG]
 
             assert read_rate > 10.0
             assert write_rate > 10.0
         finally:
-            log_stream.stop()
+            await log_stream.stop()
