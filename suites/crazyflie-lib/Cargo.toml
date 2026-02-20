@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-crazyflie-lib = "0.5.1"
-crazyflie-link = "0.4.0"
+crazyflie-lib = "0.6.0"
+crazyflie-link = "0.4.1"
 tokio = { version = "1.48", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
@@ -15,4 +15,5 @@ anyhow = "1.0"
 pretty_assertions = "1.4"
 env_logger = "0.11"
 serial_test = "3.2"
+futures = "0.3"
 

@@ -1,14 +1,14 @@
 #![allow(dead_code)]
 
 use anyhow::Result;
-use crazyflie_lib::{Crazyflie, NoTocCache, TocCache};
+use crazyflie_lib::{Crazyflie, TocCache};
 use crazyflie_link::LinkContext;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, OnceLock, RwLock};
 
 pub const DEFAULT_SITE: &str = "single-cf";
 
@@ -49,6 +49,7 @@ pub fn load_site_config() -> Result<SiteConfig> {
         .unwrap_or_else(|_| DEFAULT_SITE.to_string());
 
     let mut site_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    site_path.push("../..");
     site_path.push("sites");
     site_path.push(format!("{}.toml", site_name));
 
@@ -77,79 +78,40 @@ pub fn get_devices(config: &SiteConfig) -> Vec<(String, DeviceConfig)> {
         .collect()
 }
 
-/// Simple file-based TOC cache with in-memory layer
+/// In-memory TOC cache
 #[derive(Clone)]
-pub struct FileTocCache {
-    cache_dir: PathBuf,
-    memory_cache: Arc<RwLock<HashMap<u32, String>>>,
+pub struct InMemoryTocCache {
+    cache: Arc<RwLock<HashMap<Vec<u8>, String>>>,
 }
 
-impl FileTocCache {
-    pub fn new(cache_dir: PathBuf) -> Self {
-        fs::create_dir_all(&cache_dir).ok();
-        FileTocCache {
-            cache_dir,
-            memory_cache: Arc::new(RwLock::new(HashMap::new())),
+impl InMemoryTocCache {
+    pub fn new() -> Self {
+        InMemoryTocCache {
+            cache: Arc::new(RwLock::new(HashMap::new())),
         }
     }
+}
 
-    fn cache_file_path(&self, crc32: u32) -> PathBuf {
-        self.cache_dir.join(format!("toc_{:08x}.json", crc32))
+impl TocCache for InMemoryTocCache {
+    fn get_toc(&self, key: &[u8]) -> Option<String> {
+        self.cache.read().ok()?.get(key).cloned()
+    }
+
+    fn store_toc(&self, key: &[u8], toc: &str) {
+        if let Ok(mut cache) = self.cache.write() {
+            cache.insert(key.to_vec(), toc.to_string());
+        }
     }
 }
 
-impl TocCache for FileTocCache {
-    fn get_toc(&self, crc32: u32) -> Option<String> {
-        // Try memory cache first
-        if let Ok(lock) = self.memory_cache.read() {
-            if let Some(toc) = lock.get(&crc32) {
-                return Some(toc.clone());
-            }
-        }
+static TOC_CACHE: OnceLock<InMemoryTocCache> = OnceLock::new();
 
-        // Try file cache
-        let path = self.cache_file_path(crc32);
-        if let Ok(toc) = fs::read_to_string(&path) {
-            // Store in memory cache for next time
-            if let Ok(mut lock) = self.memory_cache.write() {
-                lock.insert(crc32, toc.clone());
-            }
-            return Some(toc);
-        }
-
-        None
-    }
-
-    fn store_toc(&self, crc32: u32, toc: &str) {
-        // Store in memory cache
-        if let Ok(mut lock) = self.memory_cache.write() {
-            lock.insert(crc32, toc.to_string());
-        }
-
-        // Store in file cache
-        let path = self.cache_file_path(crc32);
-        fs::write(path, toc).ok();
-    }
-}
-
-pub fn get_cache_dir() -> PathBuf {
-    env::temp_dir().join("crazyflie_rust_test_cache")
-}
-
-pub fn use_toc_cache() -> bool {
-    env::var("USE_TOC_CACHE")
-        .map(|v| v == "1" || v.to_lowercase() == "true")
-        .unwrap_or(false)
-}
-
-/// Connect to a Crazyflie, optionally using TOC cache based on USE_TOC_CACHE env var
+/// Connect to a Crazyflie using a process-wide shared in-memory TOC cache.
+/// The first connection per drone fetches the TOC over radio; all subsequent
+/// connections within the same test binary hit the cache.
 pub async fn connect_crazyflie(ctx: &LinkContext, uri: &str) -> Result<Crazyflie> {
-    if use_toc_cache() {
-        let cache = FileTocCache::new(get_cache_dir());
-        Ok(Crazyflie::connect_from_uri(ctx, uri, cache).await?)
-    } else {
-        Ok(Crazyflie::connect_from_uri(ctx, uri, NoTocCache).await?)
-    }
+    let cache = TOC_CACHE.get_or_init(InMemoryTocCache::new);
+    Ok(Crazyflie::connect_from_uri(ctx, uri, cache.clone()).await?)
 }
 
 pub fn init_logging() {
