@@ -1,0 +1,29 @@
+name: crazyflie-lib - Linux
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  crazyflie_lib_linux:
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 120
+    container:
+      image: rust:latest
+      options: --privileged
+    env:
+      CRAZY_SITE: stablab-linux
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          apt update
+          apt install -y libusb-1.0-0-dev uhubctl
+
+      - name: Reset power to all devices
+        run: python3 management/usb-power-reset.py -a reset
+
+      - name: Run test suite
+        run: cargo test --manifest-path suites/crazyflie-lib/Cargo.toml -- --test-threads=1

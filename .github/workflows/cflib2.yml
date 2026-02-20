@@ -1,0 +1,14 @@
+name: cflib2
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1-5'
+
+jobs:
+  linux:
+    uses: ./.github/workflows/cflib2-linux.yml
+
+  macos:
+    needs: [linux]
+    uses: ./.github/workflows/cflib2-macos.yml

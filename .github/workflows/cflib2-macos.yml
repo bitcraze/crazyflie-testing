@@ -1,0 +1,47 @@
+name: cflib2 - macOS
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  cflib2_macos:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 120
+    env:
+      CRAZY_SITE: stablab-macos
+      TEST_FILE: cflib2-macos-${{github.run_number}}
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install project dependencies
+        run: uv sync --project suites/cflib2
+
+      - name: Run test suite
+        run: uv run --project suites/cflib2 pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml suites/cflib2
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: ${{env.TEST_FILE}}_results
+          path: |
+            ${{env.TEST_FILE}}.html
+            ${{env.TEST_FILE}}.xml
+            assets/style.css
+            suites/cflib2/uv.lock
+
+      - name: Pretty print test results
+        if: ${{ !cancelled() }}
+        uses: pmeier/pytest-results-action@main
+        with:
+          path: ${{env.TEST_FILE}}.xml
+          summary: true
+          title: Test results

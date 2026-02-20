@@ -1,9 +1,0 @@
-{
-  "inputs": {
-    "category": "tests/QA/",
-    "filter": "",
-    "devices": "",
-    "experimentalFW": false,
-    "lib_version": "rik/close_threads"
-  }
-}
