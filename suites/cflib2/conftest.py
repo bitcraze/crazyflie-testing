@@ -12,13 +12,16 @@ from typing import List
 import tempfile
 from pathlib import Path
 
-from cflib._rust import Crazyflie, FileTocCache, LinkContext
+from cflib2 import Crazyflie, FileTocCache, LinkContext
+
+ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+sys.path.insert(0, ROOT)
 
 from management.arduino_power_manager import RigManager
 
 DIR = os.path.dirname(os.path.realpath(__file__))
-SITE_PATH = os.path.join(DIR, 'sites/')
-REQUIREMENT = os.path.join(DIR, 'requirements/')
+SITE_PATH = os.path.join(ROOT, 'sites/')
+REQUIREMENT = os.path.join(ROOT, 'requirements/')
 DEFAULT_SITE = 'single-cf'
 
 USB_Power_Control = namedtuple('Port', ['hub', 'port'])
@@ -114,7 +117,7 @@ class BCDevice:
         self.usb_power_control = self._parse_usb_power_control(device)
         self.power_manager = None
         self.boot_time = 0.5
-        self.sync_cf = None
+        self.cf: Crazyflie | None = None
         self._console_task = None
 
         # Bootloader support (stub until Rust backend implements it)
@@ -354,7 +357,7 @@ def get_swarm() -> List[BCDevice]:
             address = 'E7E7E7E7{:X}'.format(cf.id)
 
             # get URI from address using scan
-            found = cflib.crtp.scan_interfaces(int(address, 16))
+            found = cflib2.crtp.scan_interfaces(int(address, 16))
             if not found:
                 raise Exception(f'No device found @ {address}!')
 

@@ -8,7 +8,7 @@ dependencies = [
     "pytest",
     "pytest-timeout",
     "toml",
-    "cflib @ git+https://github.com/bitcraze/crazyflie-lib-python.git@rik/asyncrust",
+    "cflib2 @ git+https://github.com/bitcraze/crazyflie-lib-python-v2.git",
     "pytest-asyncio",
     "pytest-html",
     "pyserial"

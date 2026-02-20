@@ -15,7 +15,7 @@ CRAZY_SITE=single-cf python3 management/program --file my-firmware.bin
 To flash all devices in a site with the `my-firmware.bin` file, or:
 
 ```bash
-CRAZY_SITE=crazylab-malmö pytest tests/QA/test_param.py
+CRAZY_SITE=crazylab-malmö pytest suites/cflib2/test_param.py
 ```
 
 To run the tests in `test_param.py` on all devices in the `crazylab-malmö` site.

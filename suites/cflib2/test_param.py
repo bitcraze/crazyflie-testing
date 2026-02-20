@@ -313,7 +313,7 @@ class TestParameters:
         # This is the only test that waits for fully connected state.
         # Can fail if radio is in bad state from previous communication
         # issues (e.g. buffer overflows from rapid parameter queries).
-        connected_bc_dev.sync_cf.wait_for_params()
+        connected_bc_dev.cf.wait_for_params()  # type: ignore[union-attr]  # test is skipped
 
         # 0x08 = UINT_8,
         connected_bc_dev.cf.param.add_update_callback(group=group, name=name, cb=param_raw_cb)

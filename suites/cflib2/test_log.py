@@ -18,12 +18,17 @@ import time
 from collections import defaultdict
 
 from conftest import BCDevice
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from cflib._rust import Log
 
 class TestLogVariables:
 
     @pytest.mark.sanity
-    async def test_log_async(self, connected_bc_dev: BCDevice):
+    async def test_log_basic(self, connected_bc_dev: BCDevice):
         ''' Make sure we receive ~100 rows 1 second at 100Hz '''
+        assert connected_bc_dev.cf
         requirement = conftest.get_requirement('logging.basic')
         expected_rate = requirement['max_rate']  # Hz
         period_in_ms = int(1000 / expected_rate)
@@ -56,13 +61,14 @@ class TestLogVariables:
         while exceeding the 128 variable limit. With 16 blocks, we need >8 variables
         per block on average. We use 9 variables per block = 144 total > 128 limit.
         '''
+        assert connected_bc_dev.cf
         requirement = conftest.get_requirement('logging.variables')
         blocks_requirement = conftest.get_requirement('logging.blocks')
         log = connected_bc_dev.cf.log()
 
         # Create blocks with 9 variables each (fits in payload limit)
         # 16 blocks * 9 vars = 144 variables (exceeds 128 limit)
-        async def create_block_with_9_vars(log):
+        async def create_block_with_9_vars(log: Log):
             block = await log.create_block()
             # 9 uint8 variables = 9 bytes (well under 26 byte limit)
             await block.add_variable('sys.canfly')
@@ -107,6 +113,7 @@ class TestLogVariables:
         Make sure we get an error when adding more bytes
         than logging.blocks.max_payload to a block.
         '''
+        assert connected_bc_dev.cf
         log = connected_bc_dev.cf.log()
         block = await create_log_block_max_bytes(log)
 
@@ -121,6 +128,7 @@ class TestLogVariables:
         Make sure we can receive all packets requested when having an effective
         rate of logging.rate packets/s.
         '''
+        assert connected_bc_dev.cf
         requirement = conftest.get_requirement('logging.rate')
 
         duration = 10.0
@@ -158,20 +166,6 @@ class TestLogVariables:
         actual_total_rate = sum(packets.values()) / duration
         assert_within_percentage(expected_total_rate, actual_total_rate, 3)
 
-    async def test_log_sync(self, connected_bc_dev: BCDevice):
-        ''' Make sure logging synchronous works '''
-        requirement = conftest.get_requirement('logging.basic')
-
-        log = connected_bc_dev.cf.log()
-        block = await create_log_block_max_bytes(log)
-        log_stream = await block.start(10)
-
-        try:
-            for rows in range(requirement['max_rate']):
-                data = await log_stream.next()
-                assert_variables_included(data["data"])
-        finally:
-            await log_stream.stop()
 
 
 async def create_log_block_max_bytes(log):

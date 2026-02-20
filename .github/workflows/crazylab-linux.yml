@@ -31,7 +31,7 @@ jobs:
           enable-cache: true
 
       - name: Install project dependencies
-        run: uv sync --locked
+        run: uv sync --project suites/cflib2
 
       # - name: Download latest firmware files
       #   with:
@@ -41,13 +41,13 @@ jobs:
       #   uses: dawidd6/action-download-artifact@v4
 
       - name: Reset power to all devices
-        run: uv run python management/usb-power-reset.py -a reset
+        run: uv run --project suites/cflib2 python management/usb-power-reset.py -a reset
 
       # - name: Upgrade devices to latest firmware
       #   run: uv run python management/program.py --file nightly/
 
       - name: Run test suite
-        run: uv run pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml tests/QA
+        run: uv run --project suites/cflib2 pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml suites/cflib2
 
       - name: Upload test file
         if: ${{ !cancelled() }}
@@ -55,10 +55,11 @@ jobs:
         with:
           if-no-files-found: warn
           name: test_report_${{github.run_number}}
-          path: | 
+          path: |
             ${{env.TEST_FILE}}.html
             ${{env.TEST_FILE}}.xml
             assets/style.css
+            suites/cflib2/uv.lock
 
   
       - name: Pretty print test results

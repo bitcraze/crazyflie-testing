@@ -7,9 +7,7 @@ The tests in this repository is written using the [pytest](https://docs.pytest.o
 
 ## Where to add tests?
 
-Tests should be added under the `tests/` folder. Right now we have a convention that tests that are to be run automagicly by sites, such as the [Crazylab](https://www.bitcraze.io/2021/08/the-beginnings-of-a-test-lab/), should be put in the `tests/QA` folder. Tests that require flying or human intervention should not be put in the `QA` folder.
-
-We also have a special folder `tests/crazyswarm` for tests that are special to the [Crazyswarm project](https://crazyswarm.readthedocs.io/en/latest/).
+Tests should be added under the `suites/` folder, organized by the library they use. Tests using cflib2 go in `suites/cflib2/`. Tests that run automatically at sites such as the [Crazylab](https://www.bitcraze.io/2021/08/the-beginnings-of-a-test-lab/) live there. Tests that require flying or human intervention should not be put in `suites/cflib2/`.
 
 
 ## Connecting to the Crazyflie
