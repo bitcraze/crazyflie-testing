@@ -2,8 +2,6 @@ name: cflib2
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 2 * * 1-5'
 
 jobs:
   linux:
