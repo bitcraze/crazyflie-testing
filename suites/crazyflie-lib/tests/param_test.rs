@@ -180,3 +180,130 @@ async fn test_param_read_only_enforced() -> Result<()> {
 
     Ok(())
 }
+
+/// Verify that is_persistent() correctly identifies persistent and non-persistent parameters.
+///
+/// ring.effect is a known persistent param (marked PARAM_EXTENDED + PERSISTENT in firmware).
+/// stabilizer.estimator is a known non-persistent param.
+#[tokio::test]
+async fn test_param_is_persistent() -> Result<()> {
+    common::init_logging();
+
+    let site_config = common::load_site_config()?;
+    let devices = common::get_devices(&site_config);
+    assert!(!devices.is_empty(), "No devices in site config");
+
+    let link_context = Arc::new(LinkContext::new());
+
+    let tasks: Vec<_> = devices
+        .into_iter()
+        .map(|(name, device)| {
+            let ctx = link_context.clone();
+            let task_name = name.clone();
+            let task = tokio::spawn(async move {
+                let cf = common::connect_crazyflie(&ctx, &device.radio).await?;
+
+                assert_eq!(
+                    cf.param.is_persistent("ring.effect").await?,
+                    true,
+                    "[{}] ring.effect should be persistent",
+                    name
+                );
+
+                assert_eq!(
+                    cf.param.is_persistent("stabilizer.estimator").await?,
+                    false,
+                    "[{}] stabilizer.estimator should not be persistent",
+                    name
+                );
+
+                cf.disconnect().await;
+                println!("[{}] ok", name);
+                Ok::<_, anyhow::Error>(())
+            });
+            (task_name, task)
+        })
+        .collect();
+
+    for (name, task) in tasks {
+        task.await?
+            .map_err(|e| anyhow::anyhow!("[{}] {}", name, e))?;
+    }
+
+    Ok(())
+}
+
+/// Verify the full persistent parameter lifecycle: store, verify state, clear, verify state.
+///
+/// Uses ring.effect which is a known persistent parameter. Stores a value, verifies it
+/// appears in persistent_get_state(), then clears it and verifies it is gone.
+///
+/// TODO: add a reboot in the middle to verify the stored value actually survives a power
+/// cycle, once reboot support is available in the common module.
+#[tokio::test]
+async fn test_param_persistent_store_clear() -> Result<()> {
+    common::init_logging();
+
+    let site_config = common::load_site_config()?;
+    let devices = common::get_devices(&site_config);
+    assert!(!devices.is_empty(), "No devices in site config");
+
+    let link_context = Arc::new(LinkContext::new());
+
+    let tasks: Vec<_> = devices
+        .into_iter()
+        .map(|(name, device)| {
+            let ctx = link_context.clone();
+            let task_name = name.clone();
+            let task = tokio::spawn(async move {
+                let cf = common::connect_crazyflie(&ctx, &device.radio).await?;
+
+                let param = "ring.effect";
+                let target: u8 = 6;
+
+                // Set and store a known value
+                cf.param.set(param, target).await?;
+                cf.param.persistent_store(param).await?;
+
+                let state = cf.param.persistent_get_state(param).await?;
+                assert!(
+                    state.is_stored,
+                    "[{}] expected is_stored == true after persistent_store",
+                    name
+                );
+                let stored_u8: u8 = state
+                    .stored_value
+                    .ok_or_else(|| anyhow::anyhow!("[{}] stored_value is None despite is_stored == true", name))?
+                    .try_into()
+                    .map_err(|e| anyhow::anyhow!("[{}] stored_value has wrong type: {:?}", name, e))?;
+                assert_eq!(
+                    stored_u8, target,
+                    "[{}] stored_value mismatch: expected {}, got {}",
+                    name, target, stored_u8
+                );
+
+                // Clean up
+                cf.param.persistent_clear(param).await?;
+
+                let state = cf.param.persistent_get_state(param).await?;
+                assert!(
+                    !state.is_stored,
+                    "[{}] expected is_stored == false after final clear",
+                    name
+                );
+
+                cf.disconnect().await;
+                println!("[{}] ok", name);
+                Ok::<_, anyhow::Error>(())
+            });
+            (task_name, task)
+        })
+        .collect();
+
+    for (name, task) in tasks {
+        task.await?
+            .map_err(|e| anyhow::anyhow!("[{}] {}", name, e))?;
+    }
+
+    Ok(())
+}
