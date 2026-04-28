@@ -10,6 +10,7 @@ import glob
 import struct
 import sys
 import subprocess
+import re
 import logging
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from threading import Event
@@ -29,11 +30,61 @@ SITE_PATH = os.path.join(DIR, 'sites/')
 REQUIREMENT = os.path.join(DIR, 'requirements/')
 DEFAULT_SITE = 'single-cf'
 
-USB_Power_Control = namedtuple('Port', ['hub', 'port'])
+USB_Power_Control = namedtuple('Port', ['leaf', 'port'])
+
+# The rig's CF power hubs share this VID:PID. The parent hub is the unique
+# 05e3:0610 hub whose four child ports each contain a 05e3:0610 leaf hub
+# (each leaf carries CFs that are power-only and do not enumerate).
+PARENT_HUB_VID_PID = '05e3:0610'
 
 ALL_DECKS= ['bcLighthouse4', 'bcFlow2', 'bcMultiranger', 'bcUSD', 'bcAI', 'bcLoco']
 
 logger = logging.getLogger(__name__)
+
+
+_parent_hub_cache = None
+
+
+def _discover_parent_hub() -> str:
+    '''Return the uhubctl location of the rig's parent hub (e.g. "1-2").
+
+    Identifies the parent by topology fingerprint so it survives kernel
+    re-enumeration after reboot.
+    '''
+    out = subprocess.check_output(['uhubctl'], stderr=subprocess.STDOUT).decode('utf-8')
+
+    hubs = {}
+    current = None
+    for line in out.splitlines():
+        m = re.match(r'Current status for hub (\S+) \[([0-9a-f]{4}:[0-9a-f]{4})', line)
+        if m:
+            current = m.group(1)
+            hubs[current] = {'vid_pid': m.group(2), 'ports': {}}
+            continue
+        m = re.match(r'\s*Port (\d+):.*\[([0-9a-f]{4}:[0-9a-f]{4})', line)
+        if m and current is not None:
+            hubs[current]['ports'][int(m.group(1))] = m.group(2)
+
+    candidates = [
+        loc for loc, info in hubs.items()
+        if info['vid_pid'] == PARENT_HUB_VID_PID
+        and all(info['ports'].get(i) == PARENT_HUB_VID_PID for i in (1, 2, 3, 4))
+    ]
+    if len(candidates) != 1:
+        raise RuntimeError(
+            f'Could not uniquely identify parent USB hub by fingerprint '
+            f'(VID:PID {PARENT_HUB_VID_PID} with four {PARENT_HUB_VID_PID} children); '
+            f'matches={candidates}'
+        )
+    return candidates[0]
+
+
+def _get_parent_hub() -> str:
+    global _parent_hub_cache
+    if _parent_hub_cache is None:
+        _parent_hub_cache = _discover_parent_hub()
+        print(f'Discovered parent USB hub at uhubctl location: {_parent_hub_cache}')
+    return _parent_hub_cache
 
 
 def pytest_generate_tests(metafunc):
@@ -135,8 +186,8 @@ class BCDevice:
     def __str__(self):
         string = '{} @ {}'.format(self.name, self.link_uri)
         if self.usb_power_control is not None:
-            hub, port = self.usb_power_control.hub, self.usb_power_control.port
-            string += f' USB pwr-ctrl: [{hub}, {port}]'
+            leaf, port = self.usb_power_control.leaf, self.usb_power_control.port
+            string += f' USB pwr-ctrl: [leaf={leaf}, port={port}]'
         return string
 
     def firmware_up(self) -> bool:
@@ -237,7 +288,9 @@ class BCDevice:
         if self.usb_power_control is None:
             return False
 
-        hub, port = self.usb_power_control.hub, self.usb_power_control.port
+        parent = _get_parent_hub()
+        hub = f'{parent}.{self.usb_power_control.leaf}'
+        port = self.usb_power_control.port
         cmd = f'uhubctl -l {hub} -p {port} -a {action}'
 
         print(f'> {cmd}')
@@ -268,8 +321,8 @@ class BCDevice:
         if usb_power_control is None:
             return None
 
-        hub, port = usb_power_control.split(' ')
-        return USB_Power_Control(hub, port)
+        leaf, port = usb_power_control.split(' ')
+        return USB_Power_Control(leaf, port)
 
     def _wait_for_full_connection(self, cf: Crazyflie, uri: string, timeout: float) -> bool:
         connection_event = Event()
